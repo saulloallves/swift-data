@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle } from "lucide-react";
 import { PersonalDataStep } from "@/components/onboarding/PersonalDataStep";
-import { AddressStep } from "@/components/onboarding/AddressStep";
 import { UnitDataStep } from "@/components/onboarding/UnitDataStep";
 import { TermsStep } from "@/components/onboarding/TermsStep";
 import { SuccessStep } from "@/components/onboarding/SuccessStep";
@@ -11,12 +10,11 @@ import { StepIndicator } from "@/components/onboarding/StepIndicator";
 import { useOnboardingForm } from "@/hooks/useOnboardingForm";
 import heroImage from "@/assets/onboarding-hero.jpg";
 
-export type OnboardingStep = "personal" | "address" | "unit" | "terms" | "success";
+export type OnboardingStep = "personal" | "unit" | "terms" | "success";
 
 const steps: Array<{ key: OnboardingStep; title: string; description: string }> = [
-  { key: "personal", title: "Dados Pessoais", description: "Informações básicas do franqueado" },
-  { key: "address", title: "Endereço", description: "Dados de localização" },
-  { key: "unit", title: "Dados da Unidade", description: "Informações da franquia" },
+  { key: "personal", title: "Dados Pessoais", description: "Informações básicas e endereço pessoal" },
+  { key: "unit", title: "Dados da Unidade", description: "Informações da unidade e endereço comercial" },
   { key: "terms", title: "Termos", description: "Aceite de termos e condições" },
   { key: "success", title: "Concluído", description: "Cadastro finalizado" },
 ];
@@ -26,19 +24,23 @@ const Index = () => {
   const { formData, updateFormData, submitForm, isSubmitting } = useOnboardingForm();
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
-  const progress = ((currentStepIndex + 1) / steps.length) * 100;
+  const progress = currentStep === "success" ? 100 : ((currentStepIndex + 1) / (steps.length - 1)) * 100;
 
   const handleNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < steps.length) {
-      setCurrentStep(steps[nextIndex].key);
+    if (currentStep === "personal") {
+      setCurrentStep("unit");
+    } else if (currentStep === "unit") {
+      setCurrentStep("terms");
+    } else if (currentStep === "terms") {
+      handleSubmit();
     }
   };
 
   const handlePrevious = () => {
-    const prevIndex = currentStepIndex - 1;
-    if (prevIndex >= 0) {
-      setCurrentStep(steps[prevIndex].key);
+    if (currentStep === "unit") {
+      setCurrentStep("personal");
+    } else if (currentStep === "terms") {
+      setCurrentStep("unit");
     }
   };
 
@@ -57,15 +59,6 @@ const Index = () => {
             data={formData}
             onUpdate={updateFormData}
             onNext={handleNext}
-          />
-        );
-      case "address":
-        return (
-          <AddressStep
-            data={formData}
-            onUpdate={updateFormData}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
           />
         );
       case "unit":
@@ -143,7 +136,7 @@ const Index = () => {
           {/* Form Content */}
           <Card>
             <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
                 {currentStepIndex > 0 && (
                   <CheckCircle className="h-5 w-5 text-success" />
                 )}
