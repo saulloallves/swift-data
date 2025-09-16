@@ -912,6 +912,7 @@ export type Database = {
           drive_folder_id: string | null
           drive_folder_link: string | null
           email: string | null
+          fantasy_name: string | null
           group_code: number
           group_name: string
           has_parking: boolean | null
@@ -955,6 +956,7 @@ export type Database = {
           drive_folder_id?: string | null
           drive_folder_link?: string | null
           email?: string | null
+          fantasy_name?: string | null
           group_code?: number
           group_name: string
           has_parking?: boolean | null
@@ -998,6 +1000,7 @@ export type Database = {
           drive_folder_id?: string | null
           drive_folder_link?: string | null
           email?: string | null
+          fantasy_name?: string | null
           group_code?: number
           group_name?: string
           has_parking?: boolean | null

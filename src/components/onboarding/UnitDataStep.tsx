@@ -31,8 +31,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (error) throw error;
 
       if (result?.success) {
+        const fantasyName = result.data.nome || result.data.razao_social || "";
+        const dynamicGroupName = `${fantasyName} - ${data.unit_city}/${data.unit_uf}`;
+        
         onUpdate({
-          group_name: result.data.nome || result.data.razao_social || "",
+          fantasy_name: fantasyName,
+          group_name: dynamicGroupName,
         });
         toast.success("Dados da empresa encontrados");
       } else {
@@ -43,6 +47,14 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       toast.error("Erro ao buscar dados do CNPJ");
     } finally {
       setIsLoadingCnpj(false);
+    }
+  };
+
+  // Update group_name when city or UF changes
+  const updateGroupName = () => {
+    if (data.fantasy_name && data.unit_city && data.unit_uf) {
+      const dynamicGroupName = `${data.fantasy_name} - ${data.unit_city}/${data.unit_uf}`;
+      onUpdate({ group_name: dynamicGroupName });
     }
   };
 
@@ -58,13 +70,22 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (error) throw error;
 
       if (result?.success) {
-        onUpdate({
+        const updates = {
           unit_address: result.data.logradouro || "",
           unit_neighborhood: result.data.bairro || "",
           unit_city: result.data.localidade || "",
           unit_state: result.data.localidade || "",
           unit_uf: result.data.uf || "",
-        });
+        };
+        
+        onUpdate(updates);
+        
+        // Update group_name if fantasy_name exists
+        if (data.fantasy_name) {
+          const dynamicGroupName = `${data.fantasy_name} - ${updates.unit_city}/${updates.unit_uf}`;
+          onUpdate({ group_name: dynamicGroupName });
+        }
+        
         toast.success("Endereço encontrado e preenchido automaticamente");
       } else {
         toast.warning("CEP não encontrado");
@@ -235,7 +256,10 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   id="unit_city"
                   placeholder="Cidade"
                   value={data.unit_city}
-                  onChange={(e) => onUpdate({ unit_city: e.target.value })}
+                  onChange={(e) => {
+                    onUpdate({ unit_city: e.target.value });
+                    setTimeout(updateGroupName, 0);
+                  }}
                   disabled={isLoadingCep}
                 />
               </div>
@@ -257,7 +281,10 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   id="unit_uf"
                   placeholder="UF"
                   value={data.unit_uf}
-                  onChange={(e) => onUpdate({ unit_uf: e.target.value })}
+                  onChange={(e) => {
+                    onUpdate({ unit_uf: e.target.value });
+                    setTimeout(updateGroupName, 0);
+                  }}
                   disabled={isLoadingCep}
                   maxLength={2}
                 />

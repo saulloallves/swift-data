@@ -49,6 +49,7 @@ export interface OnboardingFormData {
   
   // Unit data
   cnpj: string;
+  fantasy_name: string;
   group_name: string;
   group_code: number;
   store_model: string;
@@ -120,6 +121,7 @@ const initialFormData: OnboardingFormData = {
   unit_state: "",
   unit_uf: "",
   cnpj: "",
+  fantasy_name: "",
   group_name: "",
   group_code: 0,
   store_model: "padrao",
@@ -201,6 +203,7 @@ export const useOnboardingForm = () => {
       // Prepare unit data
       const unitData = {
         cnpj: formData.cnpj,
+        fantasy_name: formData.fantasy_name,
         group_name: formData.group_name,
         group_code: formData.group_code,
         store_model: formData.store_model,
