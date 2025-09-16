@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,8 +89,35 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
   };
 
   return (
-    <div className="form-section">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <>
+      {/* Full-screen overlay for CPF consultation */}
+      {isLoadingCpf && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card border rounded-lg p-8 max-w-md mx-4 text-center shadow-lg">
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Consultando CPF</h3>
+            <p className="text-muted-foreground">
+              Aguarde enquanto buscamos os dados na Receita Federal...
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Full-screen overlay for CEP consultation */}
+      {isLoadingCep && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-card border rounded-lg p-8 max-w-md mx-4 text-center shadow-lg">
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Consultando CEP</h3>
+            <p className="text-muted-foreground">
+              Aguarde enquanto buscamos o endereço...
+            </p>
+          </div>
+        </div>
+      )}
+      
+      <div className="form-section">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="cpf">CPF *</Label>
           <div className="relative">
@@ -461,5 +489,6 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </Button>
       </div>
     </div>
+    </>
   );
 };
