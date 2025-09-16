@@ -63,11 +63,11 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
       if (result?.success) {
         onUpdate({
-          address: result.data.logradouro || "",
-          neighborhood: result.data.bairro || "",
-          city: result.data.localidade || "",
-          state: result.data.localidade || "",
-          uf: result.data.uf || "",
+          franchisee_address: result.data.logradouro || "",
+          franchisee_neighborhood: result.data.bairro || "",
+          franchisee_city: result.data.localidade || "",
+          franchisee_state: result.data.localidade || "",
+          franchisee_uf: result.data.uf || "",
         });
         toast.success("Endereço encontrado e preenchido automaticamente");
       } else {
@@ -275,8 +275,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               <Input
                 id="postal_code"
                 placeholder="00000-000"
-                value={data.postal_code}
-                onChange={(e) => onUpdate({ postal_code: e.target.value })}
+              value={data.franchisee_postal_code}
+              onChange={(e) => onUpdate({ franchisee_postal_code: e.target.value })}
                 onBlur={(e) => handleCepLookup(e.target.value)}
                 maxLength={8}
                 className={isLoadingCep ? "api-loading" : ""}
@@ -292,8 +292,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="address"
               placeholder="Rua, Avenida..."
-              value={data.address}
-              onChange={(e) => onUpdate({ address: e.target.value })}
+              value={data.franchisee_address}
+              onChange={(e) => onUpdate({ franchisee_address: e.target.value })}
               disabled={isLoadingCep}
             />
           </div>
@@ -303,8 +303,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="number_address"
               placeholder="123"
-              value={data.number_address}
-              onChange={(e) => onUpdate({ number_address: e.target.value })}
+              value={data.franchisee_number_address}
+              onChange={(e) => onUpdate({ franchisee_number_address: e.target.value })}
             />
           </div>
 
@@ -313,8 +313,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="address_complement"
               placeholder="Apto, Sala, etc."
-              value={data.address_complement}
-              onChange={(e) => onUpdate({ address_complement: e.target.value })}
+              value={data.franchisee_address_complement}
+              onChange={(e) => onUpdate({ franchisee_address_complement: e.target.value })}
             />
           </div>
 
@@ -323,8 +323,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="neighborhood"
               placeholder="Bairro"
-              value={data.neighborhood}
-              onChange={(e) => onUpdate({ neighborhood: e.target.value })}
+              value={data.franchisee_neighborhood}
+              onChange={(e) => onUpdate({ franchisee_neighborhood: e.target.value })}
               disabled={isLoadingCep}
             />
           </div>
@@ -334,8 +334,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="city"
               placeholder="Cidade"
-              value={data.city}
-              onChange={(e) => onUpdate({ city: e.target.value })}
+              value={data.franchisee_city}
+              onChange={(e) => onUpdate({ franchisee_city: e.target.value })}
               disabled={isLoadingCep}
             />
           </div>
@@ -345,8 +345,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="state"
               placeholder="Estado"
-              value={data.state}
-              onChange={(e) => onUpdate({ state: e.target.value })}
+              value={data.franchisee_state}
+              onChange={(e) => onUpdate({ franchisee_state: e.target.value })}
               disabled={isLoadingCep}
             />
           </div>
@@ -356,8 +356,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="uf"
               placeholder="SP"
-              value={data.uf}
-              onChange={(e) => onUpdate({ uf: e.target.value })}
+              value={data.franchisee_uf}
+              onChange={(e) => onUpdate({ franchisee_uf: e.target.value })}
               disabled={isLoadingCep}
               maxLength={2}
             />

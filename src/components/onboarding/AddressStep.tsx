@@ -30,11 +30,11 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
 
       if (result?.success) {
         onUpdate({
-          address: result.data.logradouro || "",
-          neighborhood: result.data.bairro || "",
-          city: result.data.localidade || "",
-          state: result.data.localidade || "",
-          uf: result.data.uf || "",
+          unit_address: result.data.logradouro || "",
+          unit_neighborhood: result.data.bairro || "",
+          unit_city: result.data.localidade || "",
+          unit_state: result.data.localidade || "",
+          unit_uf: result.data.uf || "",
         });
         toast.success("Endereço encontrado e preenchido automaticamente");
       } else {
@@ -49,7 +49,7 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
   };
 
   const handleSubmit = () => {
-    if (!data.postal_code || !data.address || !data.city) {
+    if (!data.unit_postal_code || !data.unit_address || !data.unit_city) {
       toast.error("Preencha todos os campos obrigatórios de endereço");
       return;
     }
@@ -58,6 +58,7 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
 
   return (
     <div className="form-section">
+      <h3 className="text-lg font-semibold mb-6">Endereço da Unidade</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="postal_code">CEP *</Label>
@@ -65,8 +66,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
             <Input
               id="postal_code"
               placeholder="00000-000"
-              value={data.postal_code}
-              onChange={(e) => onUpdate({ postal_code: e.target.value })}
+              value={data.unit_postal_code}
+              onChange={(e) => onUpdate({ unit_postal_code: e.target.value })}
               onBlur={(e) => handleCepLookup(e.target.value)}
               maxLength={8}
               className={isLoadingCep ? "api-loading" : ""}
@@ -82,8 +83,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="address"
             placeholder="Rua, Avenida, etc."
-            value={data.address}
-            onChange={(e) => onUpdate({ address: e.target.value })}
+            value={data.unit_address}
+            onChange={(e) => onUpdate({ unit_address: e.target.value })}
             disabled={isLoadingCep}
           />
         </div>
@@ -93,8 +94,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="number_address"
             placeholder="Número"
-            value={data.number_address}
-            onChange={(e) => onUpdate({ number_address: e.target.value })}
+            value={data.unit_number_address}
+            onChange={(e) => onUpdate({ unit_number_address: e.target.value })}
           />
         </div>
 
@@ -103,8 +104,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="address_complement"
             placeholder="Apartamento, bloco, etc."
-            value={data.address_complement}
-            onChange={(e) => onUpdate({ address_complement: e.target.value })}
+            value={data.unit_address_complement}
+            onChange={(e) => onUpdate({ unit_address_complement: e.target.value })}
           />
         </div>
 
@@ -113,8 +114,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="neighborhood"
             placeholder="Bairro"
-            value={data.neighborhood}
-            onChange={(e) => onUpdate({ neighborhood: e.target.value })}
+            value={data.unit_neighborhood}
+            onChange={(e) => onUpdate({ unit_neighborhood: e.target.value })}
             disabled={isLoadingCep}
           />
         </div>
@@ -124,8 +125,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="city"
             placeholder="Cidade"
-            value={data.city}
-            onChange={(e) => onUpdate({ city: e.target.value })}
+            value={data.unit_city}
+            onChange={(e) => onUpdate({ unit_city: e.target.value })}
             disabled={isLoadingCep}
           />
         </div>
@@ -135,8 +136,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="state"
             placeholder="Estado"
-            value={data.state}
-            onChange={(e) => onUpdate({ state: e.target.value })}
+            value={data.unit_state}
+            onChange={(e) => onUpdate({ unit_state: e.target.value })}
             disabled={isLoadingCep}
           />
         </div>
@@ -146,8 +147,8 @@ export const AddressStep = ({ data, onUpdate, onNext, onPrevious }: AddressStepP
           <Input
             id="uf"
             placeholder="UF"
-            value={data.uf}
-            onChange={(e) => onUpdate({ uf: e.target.value })}
+            value={data.unit_uf}
+            onChange={(e) => onUpdate({ unit_uf: e.target.value })}
             disabled={isLoadingCep}
             maxLength={2}
           />

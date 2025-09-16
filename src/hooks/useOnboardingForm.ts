@@ -27,15 +27,25 @@ export interface OnboardingFormData {
   profile_image: string;
   instagram: string;
   
-  // Address data
-  postal_code: string;
-  address: string;
-  number_address: string;
-  address_complement: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  uf: string;
+  // Franchisee address data
+  franchisee_postal_code: string;
+  franchisee_address: string;
+  franchisee_number_address: string;
+  franchisee_address_complement: string;
+  franchisee_neighborhood: string;
+  franchisee_city: string;
+  franchisee_state: string;
+  franchisee_uf: string;
+  
+  // Unit address data
+  unit_postal_code: string;
+  unit_address: string;
+  unit_number_address: string;
+  unit_address_complement: string;
+  unit_neighborhood: string;
+  unit_city: string;
+  unit_state: string;
+  unit_uf: string;
   
   // Unit data
   cnpj: string;
@@ -93,14 +103,22 @@ const initialFormData: OnboardingFormData = {
   prolabore_value: 0,
   profile_image: "",
   instagram: "",
-  postal_code: "",
-  address: "",
-  number_address: "",
-  address_complement: "",
-  neighborhood: "",
-  city: "",
-  state: "",
-  uf: "",
+  franchisee_postal_code: "",
+  franchisee_address: "",
+  franchisee_number_address: "",
+  franchisee_address_complement: "",
+  franchisee_neighborhood: "",
+  franchisee_city: "",
+  franchisee_state: "",
+  franchisee_uf: "",
+  unit_postal_code: "",
+  unit_address: "",
+  unit_number_address: "",
+  unit_address_complement: "",
+  unit_neighborhood: "",
+  unit_city: "",
+  unit_state: "",
+  unit_uf: "",
   cnpj: "",
   group_name: "",
   group_code: 0,
@@ -165,14 +183,14 @@ export const useOnboardingForm = () => {
         prolabore_value: formData.prolabore_value,
         profile_image: formData.profile_image,
         instagram: formData.instagram,
-        address: formData.address,
-        number_address: formData.number_address,
-        address_complement: formData.address_complement,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        state: formData.state,
-        uf: formData.uf,
-        postal_code: formData.postal_code,
+        address: formData.franchisee_address,
+        number_address: formData.franchisee_number_address,
+        address_complement: formData.franchisee_address_complement,
+        neighborhood: formData.franchisee_neighborhood,
+        city: formData.franchisee_city,
+        state: formData.franchisee_state,
+        uf: formData.franchisee_uf,
+        postal_code: formData.franchisee_postal_code,
         system_term_accepted: formData.system_term_accepted,
         confidentiality_term_accepted: formData.confidentiality_term_accepted,
         lgpd_term_accepted: formData.lgpd_term_accepted,
@@ -197,14 +215,14 @@ export const useOnboardingForm = () => {
         partner_parking_address: formData.partner_parking_address,
         purchases_active: formData.purchases_active,
         sales_active: formData.sales_active,
-        address: formData.address,
-        number_address: formData.number_address,
-        address_complement: formData.address_complement,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        state: formData.state,
-        uf: formData.uf,
-        postal_code: formData.postal_code,
+        address: formData.unit_address,
+        number_address: formData.unit_number_address,
+        address_complement: formData.unit_address_complement,
+        neighborhood: formData.unit_neighborhood,
+        city: formData.unit_city,
+        state: formData.unit_state,
+        uf: formData.unit_uf,
+        postal_code: formData.unit_postal_code,
         operation_mon: formData.operation_mon,
         operation_tue: formData.operation_tue,
         operation_wed: formData.operation_wed,
