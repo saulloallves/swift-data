@@ -11,6 +11,7 @@ import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatCpf, cleanCpf } from "@/lib/utils";
 
 interface PersonalDataStepProps {
   data: OnboardingFormData;
@@ -23,12 +24,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const handleCpfLookup = async (cpf: string) => {
-    if (cpf.length !== 11) return;
+    const cleanedCpf = cleanCpf(cpf);
+    if (cleanedCpf.length !== 11) return;
 
     setIsLoadingCpf(true);
     try {
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
-        body: { type: 'cpf', value: cpf }
+        body: { type: 'cpf', value: cleanedCpf }
       });
 
       if (error) throw error;
@@ -82,10 +84,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
   };
 
   const handleSubmit = () => {
-    if (!data.cpf_rnm || !data.full_name || !data.contact) {
+    const cleanedCpf = cleanCpf(data.cpf_rnm);
+    if (!cleanedCpf || !data.full_name || !data.contact) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
+    // Atualiza o CPF limpo antes de continuar
+    onUpdate({ cpf_rnm: cleanedCpf });
     onNext();
   };
 
@@ -99,10 +104,17 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Input
               id="cpf"
               placeholder="000.000.000-00"
-              value={data.cpf_rnm}
-              onChange={(e) => onUpdate({ cpf_rnm: e.target.value })}
-              onBlur={(e) => handleCpfLookup(e.target.value)}
-              maxLength={11}
+              value={formatCpf(data.cpf_rnm)}
+              onChange={(e) => {
+                const formatted = formatCpf(e.target.value);
+                onUpdate({ cpf_rnm: formatted });
+              }}
+              onBlur={(e) => {
+                const cleaned = cleanCpf(e.target.value);
+                onUpdate({ cpf_rnm: cleaned });
+                handleCpfLookup(cleaned);
+              }}
+              maxLength={14}
               className={isLoadingCpf ? "api-loading" : ""}
             />
             {isLoadingCpf && (
