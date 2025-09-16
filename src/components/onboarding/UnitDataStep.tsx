@@ -176,23 +176,47 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               <div className="space-y-2">
                 <Label htmlFor="store_phase">Fase da Loja</Label>
-                <Input
-                  id="store_phase"
-                  placeholder="Fase atual da loja"
+                <Select
                   value={data.store_phase}
-                  onChange={(e) => onUpdate({ store_phase: e.target.value })}
-                />
+                  onValueChange={(value) => {
+                    onUpdate({ store_phase: value });
+                    // Reset store_imp_phase when changing store_phase
+                    if (value === "operacao") {
+                      onUpdate({ store_imp_phase: "" });
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a fase da loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="operacao">Operação</SelectItem>
+                    <SelectItem value="implantacao">Implantação</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="store_imp_phase">Fase de Implementação</Label>
-                <Input
-                  id="store_imp_phase"
-                  placeholder="Fase de implementação"
-                  value={data.store_imp_phase}
-                  onChange={(e) => onUpdate({ store_imp_phase: e.target.value })}
-                />
-              </div>
+              {data.store_phase === "implantacao" && (
+                <div className="space-y-2">
+                  <Label htmlFor="store_imp_phase">Fase de Implementação</Label>
+                  <Select
+                    value={data.store_imp_phase}
+                    onValueChange={(value) => onUpdate({ store_imp_phase: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a fase de implementação" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="integracao">Integração</SelectItem>
+                      <SelectItem value="treinamento">Treinamento</SelectItem>
+                      <SelectItem value="procura de ponto">Procura de Ponto</SelectItem>
+                      <SelectItem value="estruturacao">Estruturação</SelectItem>
+                      <SelectItem value="compras">Compras</SelectItem>
+                      <SelectItem value="inauguracao">Inauguração</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
 
