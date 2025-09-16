@@ -7,7 +7,7 @@ export interface OnboardingFormData {
   cpf_rnm: string;
   full_name: string;
   birth_date: string;
-  email: string;
+  franchisee_email: string;
   contact: string;
   nationality: string;
   owner_type: string;
@@ -55,8 +55,8 @@ export interface OnboardingFormData {
   store_model: string;
   store_phase: string;
   store_imp_phase: string;
-  email_unit: string;
-  phone_unit: string;
+  email: string;
+  phone: string;
   instagram_profile: string;
   has_parking: boolean;
   parking_spots: number;
@@ -85,7 +85,7 @@ const initialFormData: OnboardingFormData = {
   cpf_rnm: "",
   full_name: "",
   birth_date: "",
-  email: "",
+  franchisee_email: "",
   contact: "",
   nationality: "",
   owner_type: "Pessoa Física",
@@ -127,8 +127,8 @@ const initialFormData: OnboardingFormData = {
   store_model: "padrao",
   store_phase: "implantacao",
   store_imp_phase: "integracao",
-  email_unit: "",
-  phone_unit: "",
+  email: "",
+  phone: "",
   instagram_profile: "",
   has_parking: false,
   parking_spots: 0,
@@ -166,7 +166,7 @@ export const useOnboardingForm = () => {
         cpf_rnm: formData.cpf_rnm,
         full_name: formData.full_name,
         birth_date: formData.birth_date,
-        email: formData.email,
+        email: formData.franchisee_email,
         contact: formData.contact,
         nationality: formData.nationality,
         owner_type: formData.owner_type,
@@ -209,8 +209,8 @@ export const useOnboardingForm = () => {
         store_model: formData.store_model,
         store_phase: formData.store_phase,
         store_imp_phase: formData.store_imp_phase,
-        email: formData.email_unit,
-        phone: formData.phone_unit,
+        email: formData.email,
+        phone: formData.phone,
         instagram_profile: formData.instagram_profile,
         has_parking: formData.has_parking,
         parking_spots: formData.parking_spots,

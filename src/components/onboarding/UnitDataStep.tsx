@@ -307,23 +307,23 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
             <h3 className="text-lg font-semibold mb-4">Configurações da Unidade</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="email_unit">Email da Unidade</Label>
+                <Label htmlFor="email">Email da Unidade</Label>
                 <Input
-                  id="email_unit"
+                  id="email"
                   type="email"
                   placeholder="email@unidade.com"
-                  value={data.email_unit}
-                  onChange={(e) => onUpdate({ email_unit: e.target.value })}
+                  value={data.email}
+                  onChange={(e) => onUpdate({ email: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone_unit">Telefone da Unidade</Label>
+                <Label htmlFor="phone">Telefone da Unidade</Label>
                 <Input
-                  id="phone_unit"
+                  id="phone"
                   placeholder="(11) 99999-9999"
-                  value={data.phone_unit}
-                  onChange={(e) => onUpdate({ phone_unit: e.target.value })}
+                  value={data.phone}
+                  onChange={(e) => onUpdate({ phone: e.target.value })}
                 />
               </div>
 

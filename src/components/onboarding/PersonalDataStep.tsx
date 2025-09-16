@@ -144,13 +144,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="franchisee_email">E-mail</Label>
           <Input
-            id="email"
+            id="franchisee_email"
             type="email"
             placeholder="seu@email.com"
-            value={data.email}
-            onChange={(e) => onUpdate({ email: e.target.value })}
+            value={data.franchisee_email}
+            onChange={(e) => onUpdate({ franchisee_email: e.target.value })}
           />
         </div>
 
