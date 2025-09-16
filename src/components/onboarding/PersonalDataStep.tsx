@@ -91,32 +91,6 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
   return (
     <>
-      {/* Full-screen overlay for CPF consultation */}
-      {isLoadingCpf && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card border rounded-lg p-8 max-w-md mx-4 text-center shadow-lg">
-            <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Consultando CPF</h3>
-            <p className="text-muted-foreground">
-              Aguarde enquanto buscamos os dados na Receita Federal...
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {/* Full-screen overlay for CEP consultation */}
-      {isLoadingCep && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card border rounded-lg p-8 max-w-md mx-4 text-center shadow-lg">
-            <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Consultando CEP</h3>
-            <p className="text-muted-foreground">
-              Aguarde enquanto buscamos o endereço...
-            </p>
-          </div>
-        </div>
-      )}
-      
       <div className="form-section">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
@@ -481,6 +455,31 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
         )}
       </div>
+
+      {/* Loading Overlays */}
+      {isLoadingCpf && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-8 rounded-lg shadow-lg text-center max-w-sm mx-4">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+            <h3 className="text-lg font-semibold mb-2">Buscando dados do franqueado...</h3>
+            <p className="text-sm text-muted-foreground">
+              Aguarde enquanto localizamos suas informações pessoais
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isLoadingCep && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background p-8 rounded-lg shadow-lg text-center max-w-sm mx-4">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+            <h3 className="text-lg font-semibold mb-2">Buscando endereço pessoal...</h3>
+            <p className="text-sm text-muted-foreground">
+              Localizando dados do seu CEP
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end mt-8">
         <Button onClick={handleSubmit} className="px-8">
