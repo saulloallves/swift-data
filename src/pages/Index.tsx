@@ -1,11 +1,155 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle } from "lucide-react";
+import { PersonalDataStep } from "@/components/onboarding/PersonalDataStep";
+import { AddressStep } from "@/components/onboarding/AddressStep";
+import { UnitDataStep } from "@/components/onboarding/UnitDataStep";
+import { TermsStep } from "@/components/onboarding/TermsStep";
+import { SuccessStep } from "@/components/onboarding/SuccessStep";
+import { StepIndicator } from "@/components/onboarding/StepIndicator";
+import { useOnboardingForm } from "@/hooks/useOnboardingForm";
+
+export type OnboardingStep = "personal" | "address" | "unit" | "terms" | "success";
+
+const steps: Array<{ key: OnboardingStep; title: string; description: string }> = [
+  { key: "personal", title: "Dados Pessoais", description: "Informações básicas do franqueado" },
+  { key: "address", title: "Endereço", description: "Dados de localização" },
+  { key: "unit", title: "Dados da Unidade", description: "Informações da franquia" },
+  { key: "terms", title: "Termos", description: "Aceite de termos e condições" },
+  { key: "success", title: "Concluído", description: "Cadastro finalizado" },
+];
 
 const Index = () => {
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("personal");
+  const { formData, updateFormData, submitForm, isSubmitting } = useOnboardingForm();
+
+  const currentStepIndex = steps.findIndex(step => step.key === currentStep);
+  const progress = ((currentStepIndex + 1) / steps.length) * 100;
+
+  const handleNext = () => {
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < steps.length) {
+      setCurrentStep(steps[nextIndex].key);
+    }
+  };
+
+  const handlePrevious = () => {
+    const prevIndex = currentStepIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentStep(steps[prevIndex].key);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const success = await submitForm();
+    if (success) {
+      setCurrentStep("success");
+    }
+  };
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case "personal":
+        return (
+          <PersonalDataStep
+            data={formData}
+            onUpdate={updateFormData}
+            onNext={handleNext}
+          />
+        );
+      case "address":
+        return (
+          <AddressStep
+            data={formData}
+            onUpdate={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case "unit":
+        return (
+          <UnitDataStep
+            data={formData}
+            onUpdate={updateFormData}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        );
+      case "terms":
+        return (
+          <TermsStep
+            data={formData}
+            onUpdate={updateFormData}
+            onSubmit={handleSubmit}
+            onPrevious={handlePrevious}
+            isSubmitting={isSubmitting}
+          />
+        );
+      case "success":
+        return <SuccessStep />;
+      default:
+        return null;
+    }
+  };
+
+  if (currentStep === "success") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <SuccessStep />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Cadastro de Franqueado
+            </h1>
+            <p className="text-muted-foreground">
+              Complete as informações para finalizar seu cadastro
+            </p>
+          </div>
+
+          {/* Progress */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              {steps.slice(0, -1).map((step, index) => (
+                <StepIndicator
+                  key={step.key}
+                  step={step}
+                  index={index}
+                  currentStep={currentStep}
+                  isCompleted={currentStepIndex > index}
+                  isActive={currentStep === step.key}
+                />
+              ))}
+            </div>
+            <Progress value={progress} className="w-full" />
+          </div>
+
+          {/* Form Content */}
+          <Card>
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                {currentStepIndex > 0 && (
+                  <CheckCircle className="h-5 w-5 text-success" />
+                )}
+                {steps[currentStepIndex]?.title}
+              </CardTitle>
+              <CardDescription>
+                {steps[currentStepIndex]?.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderCurrentStep()}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
