@@ -69,31 +69,63 @@ async function lookupCpf(cpf: string) {
   }
 
   try {
-    const response = await fetch(`https://api.hubdev.com.br/v2/cpf/${cpf}`, {
+    // Get current date in DD/MM/YYYY format for the 'data' parameter
+    const currentDate = new Date().toLocaleDateString('pt-BR');
+    
+    // Build the correct HUBDev API URL according to documentation
+    const url = `http://ws.hubdodesenvolvedor.com.br/v2/cpf/?cpf=${cpf}&data=${encodeURIComponent(currentDate)}&token=${hubdevApiKey}`;
+    
+    console.log(`Calling HUBDev API: ${url.replace(hubdevApiKey, '[TOKEN_HIDDEN]')}`);
+    
+    const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${hubdevApiKey}`,
-        'Content-Type': 'application/json',
+        'User-Agent': 'Lovable-API-Client/1.0',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`HubDev API error: ${response.status}`);
+      throw new Error(`HubDev API HTTP error: ${response.status}`);
     }
 
     const data = await response.json();
     
-    return {
-      success: true,
-      data: {
-        nome: data.nome,
-        nascimento: data.nascimento
+    console.log('HubDev API response:', JSON.stringify(data, null, 2));
+    
+    // Check if the API returned success
+    if (data.return === "OK" && data.result) {
+      // Format the birth date from DD/MM/YYYY to YYYY-MM-DD
+      let formattedBirthDate = '';
+      if (data.result.data_nascimento) {
+        const birthDateParts = data.result.data_nascimento.split('/');
+        if (birthDateParts.length === 3) {
+          formattedBirthDate = `${birthDateParts[2]}-${birthDateParts[1].padStart(2, '0')}-${birthDateParts[0].padStart(2, '0')}`;
+        }
       }
-    };
+      
+      return {
+        success: true,
+        data: {
+          nome: data.result.nome_da_pf || '',
+          nascimento: formattedBirthDate,
+          cpf_numero: data.result.numero_de_cpf || '',
+          situacao_cadastral: data.result.situacao_cadastral || '',
+          data_inscricao: data.result.data_inscricao || '',
+          comprovante_emitido: data.result.comprovante_emitido || ''
+        }
+      };
+    } else {
+      console.warn('HubDev API returned non-OK status:', data);
+      return {
+        success: false,
+        error: 'CPF não encontrado na base da Receita Federal'
+      };
+    }
   } catch (error) {
     console.error('CPF lookup error:', error);
     return {
       success: false,
-      error: 'Erro ao consultar CPF'
+      error: 'Erro ao consultar CPF na base da Receita Federal'
     };
   }
 }
