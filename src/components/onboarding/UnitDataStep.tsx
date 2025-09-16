@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,12 +157,21 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               <div className="space-y-2">
                 <Label htmlFor="store_model">Modelo da Loja</Label>
-                <Input
-                  id="store_model"
-                  placeholder="Modelo da loja"
+                <Select
                   value={data.store_model}
-                  onChange={(e) => onUpdate({ store_model: e.target.value })}
-                />
+                  onValueChange={(value) => onUpdate({ store_model: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o modelo da loja" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="junior">Júnior</SelectItem>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="padrao">Padrão</SelectItem>
+                    <SelectItem value="intermediaria">Intermediária</SelectItem>
+                    <SelectItem value="mega store">Mega Store</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
