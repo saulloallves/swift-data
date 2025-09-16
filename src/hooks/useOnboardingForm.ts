@@ -24,6 +24,8 @@ export interface OnboardingFormData {
   other_activities_description: string;
   receives_prolabore: boolean;
   prolabore_value: number;
+  profile_image: string;
+  instagram: string;
   
   // Address data
   postal_code: string;
@@ -89,6 +91,8 @@ const initialFormData: OnboardingFormData = {
   other_activities_description: "",
   receives_prolabore: false,
   prolabore_value: 0,
+  profile_image: "",
+  instagram: "",
   postal_code: "",
   address: "",
   number_address: "",
@@ -159,6 +163,8 @@ export const useOnboardingForm = () => {
         other_activities_description: formData.other_activities_description,
         receives_prolabore: formData.receives_prolabore,
         prolabore_value: formData.prolabore_value,
+        profile_image: formData.profile_image,
+        instagram: formData.instagram,
         address: formData.address,
         number_address: formData.number_address,
         address_complement: formData.address_complement,

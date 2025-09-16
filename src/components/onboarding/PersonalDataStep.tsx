@@ -18,6 +18,7 @@ interface PersonalDataStepProps {
 
 export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepProps) => {
   const [isLoadingCpf, setIsLoadingCpf] = useState(false);
+  const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const handleCpfLookup = async (cpf: string) => {
     if (cpf.length !== 11) return;
@@ -44,6 +45,37 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
       toast.error("Erro ao buscar dados do CPF");
     } finally {
       setIsLoadingCpf(false);
+    }
+  };
+
+  const handleCepLookup = async (cep: string) => {
+    if (cep.length !== 8) return;
+
+    setIsLoadingCep(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('api-lookup', {
+        body: { type: 'cep', value: cep }
+      });
+
+      if (error) throw error;
+
+      if (result?.success) {
+        onUpdate({
+          address: result.data.logradouro || "",
+          neighborhood: result.data.bairro || "",
+          city: result.data.localidade || "",
+          state: result.data.localidade || "",
+          uf: result.data.uf || "",
+        });
+        toast.success("Endereço encontrado e preenchido automaticamente");
+      } else {
+        toast.warning("CEP não encontrado");
+      }
+    } catch (error) {
+      console.error('CEP lookup error:', error);
+      toast.error("Erro ao buscar dados do CEP");
+    } finally {
+      setIsLoadingCep(false);
     }
   };
 
@@ -184,6 +216,126 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="instagram">Instagram Pessoal</Label>
+          <Input
+            id="instagram"
+            placeholder="@seuusuario"
+            value={data.instagram}
+            onChange={(e) => onUpdate({ instagram: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="profile_image">URL da Foto de Perfil</Label>
+          <Input
+            id="profile_image"
+            placeholder="https://exemplo.com/foto.jpg"
+            value={data.profile_image}
+            onChange={(e) => onUpdate({ profile_image: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Endereço Pessoal */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-4">Endereço Pessoal</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="postal_code">CEP</Label>
+            <div className="relative">
+              <Input
+                id="postal_code"
+                placeholder="00000-000"
+                value={data.postal_code}
+                onChange={(e) => onUpdate({ postal_code: e.target.value })}
+                onBlur={(e) => handleCepLookup(e.target.value)}
+                maxLength={8}
+                className={isLoadingCep ? "api-loading" : ""}
+              />
+              {isLoadingCep && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="address">Logradouro</Label>
+            <Input
+              id="address"
+              placeholder="Rua, Avenida..."
+              value={data.address}
+              onChange={(e) => onUpdate({ address: e.target.value })}
+              disabled={isLoadingCep}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="number_address">Número</Label>
+            <Input
+              id="number_address"
+              placeholder="123"
+              value={data.number_address}
+              onChange={(e) => onUpdate({ number_address: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="address_complement">Complemento</Label>
+            <Input
+              id="address_complement"
+              placeholder="Apto, Sala, etc."
+              value={data.address_complement}
+              onChange={(e) => onUpdate({ address_complement: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="neighborhood">Bairro</Label>
+            <Input
+              id="neighborhood"
+              placeholder="Bairro"
+              value={data.neighborhood}
+              onChange={(e) => onUpdate({ neighborhood: e.target.value })}
+              disabled={isLoadingCep}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">Cidade</Label>
+            <Input
+              id="city"
+              placeholder="Cidade"
+              value={data.city}
+              onChange={(e) => onUpdate({ city: e.target.value })}
+              disabled={isLoadingCep}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="state">Estado</Label>
+            <Input
+              id="state"
+              placeholder="Estado"
+              value={data.state}
+              onChange={(e) => onUpdate({ state: e.target.value })}
+              disabled={isLoadingCep}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="uf">UF</Label>
+            <Input
+              id="uf"
+              placeholder="SP"
+              value={data.uf}
+              onChange={(e) => onUpdate({ uf: e.target.value })}
+              disabled={isLoadingCep}
+              maxLength={2}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-4 mt-6">
@@ -279,6 +431,28 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="receives_prolabore"
+            checked={data.receives_prolabore}
+            onCheckedChange={(checked) => onUpdate({ receives_prolabore: checked as boolean })}
+          />
+          <Label htmlFor="receives_prolabore">Recebe pró-labore?</Label>
+        </div>
+
+        {data.receives_prolabore && (
+          <div className="space-y-2">
+            <Label htmlFor="prolabore_value">Valor do Pró-labore (R$)</Label>
+            <Input
+              id="prolabore_value"
+              type="number"
+              placeholder="0,00"
+              value={data.prolabore_value}
+              onChange={(e) => onUpdate({ prolabore_value: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end mt-8">
