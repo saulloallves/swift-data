@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -255,13 +256,11 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="profile_image">URL da Foto de Perfil</Label>
-          <Input
-            id="profile_image"
-            placeholder="https://exemplo.com/foto.jpg"
+        <div className="md:col-span-2 space-y-2">
+          <ImageDropzone
             value={data.profile_image}
-            onChange={(e) => onUpdate({ profile_image: e.target.value })}
+            onChange={(url) => onUpdate({ profile_image: url })}
+            label="Foto de Perfil"
           />
         </div>
       </div>
