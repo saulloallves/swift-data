@@ -76,7 +76,7 @@ const initialFormData: OnboardingFormData = {
   birth_date: "",
   email: "",
   contact: "",
-  nationality: "Brasileira",
+  nationality: "",
   owner_type: "Pessoa Física",
   education: "",
   previous_profession: "",
