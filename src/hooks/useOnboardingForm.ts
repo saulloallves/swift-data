@@ -237,10 +237,10 @@ export const useOnboardingForm = () => {
         is_active: true,
       };
 
-      // Execute both upserts in parallel
+      // Execute both upserts in parallel and return the data
       const [franchiseeResult, unitResult] = await Promise.all([
-        supabase.from('franqueados').upsert(franchiseeData, { onConflict: 'cpf_rnm' }),
-        supabase.from('unidades').upsert(unitData, { onConflict: 'cnpj' })
+        supabase.from('franqueados').upsert(franchiseeData, { onConflict: 'cpf_rnm' }).select('id').single(),
+        supabase.from('unidades').upsert(unitData, { onConflict: 'cnpj' }).select('id').single()
       ]);
 
       if (franchiseeResult.error) {
@@ -252,6 +252,28 @@ export const useOnboardingForm = () => {
       if (unitResult.error) {
         console.error('Unit upsert error:', unitResult.error);
         toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
+        return false;
+      }
+
+      // Create the relationship in franqueados_unidades table
+      const franchiseeId = franchiseeResult.data.id;
+      const unitId = unitResult.data.id;
+
+      const relationshipResult = await supabase
+        .from('franqueados_unidades')
+        .upsert(
+          { 
+            franqueado_id: franchiseeId, 
+            unidade_id: unitId 
+          },
+          { 
+            onConflict: 'franqueado_id,unidade_id' 
+          }
+        );
+
+      if (relationshipResult.error) {
+        console.error('Relationship upsert error:', relationshipResult.error);
+        toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
         return false;
       }
 
