@@ -193,11 +193,11 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           <Label htmlFor="owner_type">Tipo de Proprietário</Label>
           <Select value={data.owner_type} onValueChange={(value) => onUpdate({ owner_type: value })}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
-              <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
+              <SelectItem value="Principal">Principal</SelectItem>
+              <SelectItem value="Sócio">Sócio</SelectItem>
             </SelectContent>
           </Select>
         </div>
