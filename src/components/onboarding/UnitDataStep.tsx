@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatCnpj, cleanCnpj } from "@/lib/utils";
 
 interface UnitDataStepProps {
   data: OnboardingFormData;
@@ -21,12 +22,13 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   const [isLoadingCep, setIsLoadingCep] = useState(false);
 
   const handleCnpjLookup = async (cnpj: string) => {
-    if (cnpj.length !== 14) return;
+    const cleanedCnpj = cleanCnpj(cnpj);
+    if (cleanedCnpj.length !== 14) return;
 
     setIsLoadingCnpj(true);
     try {
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
-        body: { type: 'cnpj', value: cnpj }
+        body: { type: 'cnpj', value: cleanedCnpj }
       });
 
       if (error) throw error;
@@ -100,7 +102,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   };
 
   const handleSubmit = () => {
-    if (!data.cnpj || !data.group_name || !data.group_code || !data.unit_postal_code || !data.unit_address || !data.unit_city) {
+    const cleanedCnpj = cleanCnpj(data.cnpj || "");
+    if (!cleanedCnpj || !data.group_name || !data.group_code || !data.unit_postal_code || !data.unit_address || !data.unit_city) {
       toast.error("Preencha todos os campos obrigatórios da unidade e endereço");
       return;
     }
@@ -121,10 +124,13 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   <Input
                     id="cnpj"
                     placeholder="00.000.000/0000-00"
-                    value={data.cnpj}
-                    onChange={(e) => onUpdate({ cnpj: e.target.value })}
+                    value={formatCnpj(data.cnpj || "")}
+                    onChange={(e) => {
+                      const cleanedValue = cleanCnpj(e.target.value);
+                      onUpdate({ cnpj: cleanedValue });
+                    }}
                     onBlur={(e) => handleCnpjLookup(e.target.value)}
-                    maxLength={14}
+                    maxLength={18}
                     className={isLoadingCnpj ? "api-loading" : ""}
                   />
                   {isLoadingCnpj && (

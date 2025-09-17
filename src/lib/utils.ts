@@ -92,3 +92,26 @@ export function cleanCurrency(value: string): number {
   // Aplica limite máximo de 10 milhões
   return Math.min(numberValue, 10000000);
 }
+
+export function formatCnpj(value: string): string {
+  // Remove todos os caracteres não numéricos
+  const numbers = value.replace(/\D/g, '');
+  
+  // Aplica a máscara 00.000.000/0000-00
+  if (numbers.length <= 2) {
+    return numbers;
+  } else if (numbers.length <= 5) {
+    return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
+  } else if (numbers.length <= 8) {
+    return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5)}`;
+  } else if (numbers.length <= 12) {
+    return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5, 8)}/${numbers.slice(8)}`;
+  } else {
+    return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5, 8)}/${numbers.slice(8, 12)}-${numbers.slice(12, 14)}`;
+  }
+}
+
+export function cleanCnpj(value: string): string {
+  // Remove todos os caracteres não numéricos
+  return value.replace(/\D/g, '');
+}
