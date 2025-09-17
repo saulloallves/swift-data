@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, ArrowRight, Download, Mail } from "lucide-react";
+
 export const SuccessStep = () => {
   const handleNewRegistration = () => {
     window.location.reload();
   };
-  return <div className="max-w-2xl mx-auto text-center">
+
+  return (
+    <div className="max-w-2xl mx-auto text-center">
       <Card className="border-success/20 bg-success/5">
         <CardContent className="p-8">
           <div className="space-y-6">
@@ -56,10 +59,18 @@ export const SuccessStep = () => {
                 entre em contato conosco através do suporte.
               </p>
               
-              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button onClick={handleNewRegistration} variant="outline">
+                  Novo Cadastro
+                </Button>
+                <Button>
+                  Ir para Suporte
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
