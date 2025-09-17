@@ -46,14 +46,23 @@ export function cleanPhoneNumber(value: string): string {
 }
 
 export function formatCurrency(value: string | number): string {
-  // Converte para string e remove caracteres não numéricos
-  const numbers = value.toString().replace(/\D/g, '');
+  // Se for número, converte para string formatada
+  if (typeof value === 'number') {
+    return value.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+    });
+  }
+  
+  // Remove todos os caracteres não numéricos
+  const numbers = value.replace(/\D/g, '');
   
   if (!numbers) {
     return 'R$ 0,00';
   }
   
-  // Converte para número e divide por 100 para ter os centavos
+  // Converte para número (centavos) e depois para reais
   const numberValue = parseInt(numbers) / 100;
   
   // Formata para moeda brasileira

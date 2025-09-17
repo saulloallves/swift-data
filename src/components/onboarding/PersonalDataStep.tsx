@@ -473,12 +473,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               placeholder="R$ 0,00"
               value={formatCurrency(data.prolabore_value || 0)}
               onChange={(e) => {
-                const formatted = formatCurrency(e.target.value);
-                onUpdate({ prolabore_value: cleanCurrency(formatted) });
-              }}
-              onBlur={(e) => {
-                const cleaned = cleanCurrency(e.target.value);
-                onUpdate({ prolabore_value: cleaned });
+                const cleanValue = cleanCurrency(e.target.value);
+                onUpdate({ prolabore_value: cleanValue });
               }}
             />
           </div>
