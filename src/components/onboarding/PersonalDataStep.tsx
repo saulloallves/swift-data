@@ -99,7 +99,6 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     if (!data.previous_profession) errors.push("Profissão Anterior");
     if (!data.previous_salary_range) errors.push("Faixa Salarial Anterior");
     if (!data.instagram) errors.push("Instagram Pessoal");
-    if (!data.profile_image) errors.push("Foto de Perfil");
 
     // Campos de endereço obrigatórios
     if (!data.franchisee_postal_code) errors.push("CEP");
@@ -299,7 +298,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="md:col-span-2 space-y-2">
-          <Label>Foto de Perfil *</Label>
+          <Label>Foto de Perfil</Label>
           <ImageDropzone
             value={data.profile_image}
             onChange={(url) => onUpdate({ profile_image: url })}
