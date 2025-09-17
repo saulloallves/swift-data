@@ -11,7 +11,7 @@ import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber, formatCurrency, cleanCurrency } from "@/lib/utils";
+import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber, formatCurrency, cleanCurrency, formatCep, cleanCep } from "@/lib/utils";
 
 interface PersonalDataStepProps {
   data: OnboardingFormData;
@@ -53,12 +53,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
   };
 
   const handleCepLookup = async (cep: string) => {
-    if (cep.length !== 8) return;
+    const cleanedCep = cleanCep(cep);
+    if (cleanedCep.length !== 8) return;
 
     setIsLoadingCep(true);
     try {
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
-        body: { type: 'cep', value: cep }
+        body: { type: 'cep', value: cleanedCep }
       });
 
       if (error) throw error;
@@ -101,7 +102,8 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     if (!data.instagram) errors.push("Instagram Pessoal");
 
     // Campos de endereço obrigatórios
-    if (!data.franchisee_postal_code) errors.push("CEP");
+    const cleanedCep = cleanCep(data.franchisee_postal_code || "");
+    if (!cleanedCep) errors.push("CEP");
     if (!data.franchisee_address) errors.push("Logradouro");
     if (!data.franchisee_number_address) errors.push("Número");
     if (data.has_complement && !data.franchisee_address_complement) errors.push("Complemento");
@@ -133,8 +135,11 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
       return;
     }
 
-    // Atualiza o CPF limpo antes de continuar
-    onUpdate({ cpf_rnm: cleanedCpf });
+    // Atualiza o CPF e CEP limpos antes de continuar
+    onUpdate({ 
+      cpf_rnm: cleanedCpf,
+      franchisee_postal_code: cleanedCep
+    });
     onNext();
   };
 
@@ -316,10 +321,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               <Input
                 id="postal_code"
                 placeholder="00000-000"
-              value={data.franchisee_postal_code}
-              onChange={(e) => onUpdate({ franchisee_postal_code: e.target.value })}
+                value={formatCep(data.franchisee_postal_code || "")}
+                onChange={(e) => {
+                  const cleanedValue = cleanCep(e.target.value);
+                  onUpdate({ franchisee_postal_code: cleanedValue });
+                }}
                 onBlur={(e) => handleCepLookup(e.target.value)}
-                maxLength={8}
+                maxLength={9}
                 className={isLoadingCep ? "api-loading" : ""}
               />
               {isLoadingCep && (
