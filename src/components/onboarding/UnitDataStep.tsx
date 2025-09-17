@@ -114,18 +114,33 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     const hasValidImplementationPhase = data.store_phase !== "implantacao" || 
       (data.store_phase === "implantacao" && data.store_imp_phase);
     
-    if (!cleanedCnpj || !data.group_name || !data.group_code || !data.store_model || !data.store_phase || !hasValidImplementationPhase || !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement) {
+    if (!cleanedCnpj || !data.group_name || !data.group_code || !data.store_model || !data.store_phase || !hasValidImplementationPhase || 
+        !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement ||
+        !data.email || !data.phone || !data.instagram_profile ||
+        !data.operation_mon || !data.operation_tue || !data.operation_wed || !data.operation_thu || 
+        !data.operation_fri || !data.operation_sat || !data.operation_sun || !data.operation_hol) {
       const missingFields = [];
       if (!cleanedCnpj) missingFields.push("CNPJ");
       if (!data.group_name) missingFields.push("Nome da Unidade");
       if (!data.group_code) missingFields.push("Código da Unidade");
       if (!data.store_model) missingFields.push("Modelo da Loja");
       if (!data.store_phase) missingFields.push("Fase da Loja");
-      if (!hasValidImplementationPhase) missingFields.push("Fase de Implementação");
+      if (!hasValidImplementationPhase) missingFields.push("Fase de Implantação");
       if (!cleanedCep) missingFields.push("CEP");
       if (!data.unit_address) missingFields.push("Logradouro");
       if (!data.unit_city) missingFields.push("Cidade");
       if (!hasValidComplement) missingFields.push("Complemento");
+      if (!data.email) missingFields.push("Email da Unidade");
+      if (!data.phone) missingFields.push("Telefone da Unidade");
+      if (!data.instagram_profile) missingFields.push("Instagram da Unidade");
+      if (!data.operation_mon) missingFields.push("Segunda-feira");
+      if (!data.operation_tue) missingFields.push("Terça-feira");
+      if (!data.operation_wed) missingFields.push("Quarta-feira");
+      if (!data.operation_thu) missingFields.push("Quinta-feira");
+      if (!data.operation_fri) missingFields.push("Sexta-feira");
+      if (!data.operation_sat) missingFields.push("Sábado");
+      if (!data.operation_sun) missingFields.push("Domingo");
+      if (!data.operation_hol) missingFields.push("Feriados");
       
       toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`);
       return;
@@ -383,7 +398,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
             <h3 className="text-lg font-semibold mb-4">Configurações da Unidade</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Email da Unidade</Label>
+                <Label htmlFor="email">Email da Unidade *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -394,7 +409,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone da Unidade</Label>
+                <Label htmlFor="phone">Telefone da Unidade *</Label>
                 <Input
                   id="phone"
                   placeholder="(11) 99999-9999"
@@ -404,7 +419,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="instagram_profile">Instagram da Unidade</Label>
+                <Label htmlFor="instagram_profile">Instagram da Unidade *</Label>
                 <Input
                   id="instagram_profile"
                   placeholder="@unidade_instagram"
@@ -489,7 +504,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
             <h3 className="text-lg font-semibold mb-4">Horários de Funcionamento</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="operation_mon">Segunda-feira</Label>
+                <Label htmlFor="operation_mon">Segunda-feira *</Label>
                 <Input
                   id="operation_mon"
                   placeholder="08:00-18:00"
@@ -499,7 +514,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_tue">Terça-feira</Label>
+                <Label htmlFor="operation_tue">Terça-feira *</Label>
                 <Input
                   id="operation_tue"
                   placeholder="08:00-18:00"
@@ -509,7 +524,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_wed">Quarta-feira</Label>
+                <Label htmlFor="operation_wed">Quarta-feira *</Label>
                 <Input
                   id="operation_wed"
                   placeholder="08:00-18:00"
@@ -519,7 +534,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_thu">Quinta-feira</Label>
+                <Label htmlFor="operation_thu">Quinta-feira *</Label>
                 <Input
                   id="operation_thu"
                   placeholder="08:00-18:00"
@@ -529,7 +544,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_fri">Sexta-feira</Label>
+                <Label htmlFor="operation_fri">Sexta-feira *</Label>
                 <Input
                   id="operation_fri"
                   placeholder="08:00-18:00"
@@ -539,7 +554,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_sat">Sábado</Label>
+                <Label htmlFor="operation_sat">Sábado *</Label>
                 <Input
                   id="operation_sat"
                   placeholder="08:00-18:00"
@@ -549,7 +564,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_sun">Domingo</Label>
+                <Label htmlFor="operation_sun">Domingo *</Label>
                 <Input
                   id="operation_sun"
                   placeholder="08:00-18:00"
@@ -559,7 +574,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="operation_hol">Feriados</Label>
+                <Label htmlFor="operation_hol">Feriados *</Label>
                 <Input
                   id="operation_hol"
                   placeholder="08:00-18:00 ou Fechado"
