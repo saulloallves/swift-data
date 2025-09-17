@@ -85,10 +85,55 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
   const handleSubmit = () => {
     const cleanedCpf = cleanCpf(data.cpf_rnm);
-    if (!cleanedCpf || !data.full_name || !data.contact) {
-      toast.error("Preencha todos os campos obrigatórios");
+    const errors = [];
+
+    // Campos obrigatórios básicos
+    if (!cleanedCpf) errors.push("CPF");
+    if (!data.full_name) errors.push("Nome Completo");
+    if (!data.birth_date) errors.push("Data de Nascimento");
+    if (!data.nationality) errors.push("Nacionalidade");
+    if (!data.franchisee_email) errors.push("E-mail");
+    if (!data.contact) errors.push("Telefone/Contato");
+    if (!data.owner_type) errors.push("Tipo de Proprietário");
+    if (!data.education) errors.push("Escolaridade");
+    if (!data.previous_profession) errors.push("Profissão Anterior");
+    if (!data.previous_salary_range) errors.push("Faixa Salarial Anterior");
+    if (!data.instagram) errors.push("Instagram Pessoal");
+    if (!data.profile_image) errors.push("Foto de Perfil");
+
+    // Campos de endereço obrigatórios
+    if (!data.franchisee_postal_code) errors.push("CEP");
+    if (!data.franchisee_address) errors.push("Logradouro");
+    if (!data.franchisee_number_address) errors.push("Número");
+    if (!data.franchisee_address_complement) errors.push("Complemento");
+    if (!data.franchisee_neighborhood) errors.push("Bairro");
+    if (!data.franchisee_city) errors.push("Cidade");
+    if (!data.franchisee_state) errors.push("Estado");
+    if (!data.franchisee_uf) errors.push("UF");
+
+    // Outros campos obrigatórios
+    if (!data.availability) errors.push("Disponibilidade");
+    if (!data.discovery_source) errors.push("Como conheceu a franquia");
+
+    // Campos condicionais obrigatórios
+    if (data.was_referred) {
+      if (!data.referrer_name) errors.push("Nome do Indicador");
+      if (!data.referrer_unit_code) errors.push("Código da Unidade do Indicador");
+    }
+
+    if (data.has_other_activities) {
+      if (!data.other_activities_description) errors.push("Descrição das outras atividades");
+    }
+
+    if (data.receives_prolabore) {
+      if (!data.prolabore_value || data.prolabore_value === 0) errors.push("Valor do Pró-labore");
+    }
+
+    if (errors.length > 0) {
+      toast.error(`Preencha todos os campos obrigatórios: ${errors.join(", ")}`);
       return;
     }
+
     // Atualiza o CPF limpo antes de continuar
     onUpdate({ cpf_rnm: cleanedCpf });
     onNext();
@@ -135,7 +180,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="birth_date">Data de Nascimento</Label>
+          <Label htmlFor="birth_date">Data de Nascimento *</Label>
           <Input
             id="birth_date"
             type="date"
@@ -146,7 +191,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="nationality">Nacionalidade</Label>
+          <Label htmlFor="nationality">Nacionalidade *</Label>
           <Select value={data.nationality} onValueChange={(value) => onUpdate({ nationality: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
@@ -159,7 +204,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="franchisee_email">E-mail</Label>
+          <Label htmlFor="franchisee_email">E-mail *</Label>
           <Input
             id="franchisee_email"
             type="email"
@@ -188,7 +233,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="owner_type">Tipo de Proprietário</Label>
+          <Label htmlFor="owner_type">Tipo de Proprietário *</Label>
           <Select value={data.owner_type} onValueChange={(value) => onUpdate({ owner_type: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
@@ -201,7 +246,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="education">Escolaridade</Label>
+          <Label htmlFor="education">Escolaridade *</Label>
           <Select value={data.education} onValueChange={(value) => onUpdate({ education: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
@@ -218,7 +263,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="previous_profession">Profissão Anterior</Label>
+          <Label htmlFor="previous_profession">Profissão Anterior *</Label>
           <Input
             id="previous_profession"
             placeholder="Sua profissão anterior"
@@ -228,7 +273,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="previous_salary_range">Faixa Salarial Anterior</Label>
+          <Label htmlFor="previous_salary_range">Faixa Salarial Anterior *</Label>
           <Select value={data.previous_salary_range} onValueChange={(value) => onUpdate({ previous_salary_range: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
@@ -244,7 +289,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="instagram">Instagram Pessoal</Label>
+          <Label htmlFor="instagram">Instagram Pessoal *</Label>
           <Input
             id="instagram"
             placeholder="@seuusuario"
@@ -254,6 +299,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="md:col-span-2 space-y-2">
+          <Label>Foto de Perfil *</Label>
           <ImageDropzone
             value={data.profile_image}
             onChange={(url) => onUpdate({ profile_image: url })}
@@ -267,7 +313,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         <h3 className="text-lg font-semibold mb-4">Endereço Pessoal</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="postal_code">CEP</Label>
+            <Label htmlFor="postal_code">CEP *</Label>
             <div className="relative">
               <Input
                 id="postal_code"
@@ -285,7 +331,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Logradouro</Label>
+            <Label htmlFor="address">Logradouro *</Label>
             <Input
               id="address"
               placeholder="Rua, Avenida..."
@@ -296,7 +342,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="number_address">Número</Label>
+            <Label htmlFor="number_address">Número *</Label>
             <Input
               id="number_address"
               placeholder="123"
@@ -306,7 +352,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address_complement">Complemento</Label>
+            <Label htmlFor="address_complement">Complemento *</Label>
             <Input
               id="address_complement"
               placeholder="Apto, Sala, etc."
@@ -316,7 +362,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="neighborhood">Bairro</Label>
+            <Label htmlFor="neighborhood">Bairro *</Label>
             <Input
               id="neighborhood"
               placeholder="Bairro"
@@ -327,7 +373,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="city">Cidade</Label>
+            <Label htmlFor="city">Cidade *</Label>
             <Input
               id="city"
               placeholder="Cidade"
@@ -338,7 +384,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="state">Estado</Label>
+            <Label htmlFor="state">Estado *</Label>
             <Input
               id="state"
               placeholder="Estado"
@@ -349,7 +395,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="uf">UF</Label>
+            <Label htmlFor="uf">UF *</Label>
             <Input
               id="uf"
               placeholder="SP"
@@ -384,7 +430,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         {data.was_referred && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="referrer_name">Nome do Indicador</Label>
+              <Label htmlFor="referrer_name">Nome do Indicador *</Label>
               <Input
                 id="referrer_name"
                 placeholder="Nome completo"
@@ -393,7 +439,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referrer_unit_code">Código da Unidade do Indicador</Label>
+              <Label htmlFor="referrer_unit_code">Código da Unidade do Indicador *</Label>
               <Input
                 id="referrer_unit_code"
                 placeholder="Código da unidade"
@@ -415,7 +461,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
         {data.has_other_activities && (
           <div className="space-y-2">
-            <Label htmlFor="other_activities_description">Descreva suas outras atividades</Label>
+            <Label htmlFor="other_activities_description">Descreva suas outras atividades *</Label>
             <Textarea
               id="other_activities_description"
               placeholder="Descreva suas outras atividades profissionais"
@@ -426,7 +472,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="availability">Disponibilidade</Label>
+          <Label htmlFor="availability">Disponibilidade *</Label>
           <Select value={data.availability} onValueChange={(value) => onUpdate({ availability: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione sua disponibilidade" />
@@ -441,7 +487,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="discovery_source">Como conheceu a franquia?</Label>
+          <Label htmlFor="discovery_source">Como conheceu a franquia? *</Label>
           <Select value={data.discovery_source} onValueChange={(value) => onUpdate({ discovery_source: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione..." />
@@ -467,7 +513,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
         {data.receives_prolabore && (
           <div className="space-y-2">
-            <Label htmlFor="prolabore_value">Valor do Pró-labore (R$)</Label>
+            <Label htmlFor="prolabore_value">Valor do Pró-labore (R$) *</Label>
             <Input
               id="prolabore_value"
               placeholder="R$ 0,00"
