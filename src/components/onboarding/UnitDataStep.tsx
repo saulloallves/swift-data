@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCnpj, cleanCnpj, formatCep, cleanCep } from "@/lib/utils";
+import { formatCnpj, cleanCnpj, formatCep, cleanCep, formatPhoneNumber, cleanPhoneNumber } from "@/lib/utils";
 
 interface UnitDataStepProps {
   data: OnboardingFormData;
@@ -426,8 +426,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="phone"
                   placeholder="(11) 99999-9999"
-                  value={data.phone}
-                  onChange={(e) => onUpdate({ phone: e.target.value })}
+                  value={formatPhoneNumber(data.phone || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanPhoneNumber(e.target.value);
+                    onUpdate({ phone: cleanedValue });
+                  }}
+                  maxLength={15}
                 />
               </div>
 
