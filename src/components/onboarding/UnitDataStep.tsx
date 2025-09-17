@@ -105,8 +105,22 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   const handleSubmit = () => {
     const cleanedCnpj = cleanCnpj(data.cnpj || "");
     const cleanedCep = cleanCep(data.unit_postal_code || "");
-    if (!cleanedCnpj || !data.group_name || !data.group_code || !cleanedCep || !data.unit_address || !data.unit_city) {
-      toast.error("Preencha todos os campos obrigatórios da unidade e endereço");
+    
+    // Validação do complemento quando marcado como obrigatório
+    const hasValidComplement = !data.has_unit_complement || 
+      (data.has_unit_complement && data.unit_address_complement && data.unit_address_complement !== "Sem Complemento");
+    
+    if (!cleanedCnpj || !data.group_name || !data.group_code || !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement) {
+      const missingFields = [];
+      if (!cleanedCnpj) missingFields.push("CNPJ");
+      if (!data.group_name) missingFields.push("Nome da Unidade");
+      if (!data.group_code) missingFields.push("Código da Unidade");
+      if (!cleanedCep) missingFields.push("CEP");
+      if (!data.unit_address) missingFields.push("Logradouro");
+      if (!data.unit_city) missingFields.push("Cidade");
+      if (!hasValidComplement) missingFields.push("Complemento");
+      
+      toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`);
       return;
     }
     onNext();
@@ -275,13 +289,33 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_address_complement">Complemento</Label>
-                <Input
-                  id="unit_address_complement"
-                  placeholder="Apartamento, sala, etc."
-                  value={data.unit_address_complement}
-                  onChange={(e) => onUpdate({ unit_address_complement: e.target.value })}
-                />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="has_unit_complement"
+                    checked={data.has_unit_complement || false}
+                    onCheckedChange={(checked) => {
+                      const updates: any = { has_unit_complement: !!checked };
+                      if (!checked) {
+                        updates.unit_address_complement = "Sem Complemento";
+                      } else if (data.unit_address_complement === "Sem Complemento") {
+                        updates.unit_address_complement = "";
+                      }
+                      onUpdate(updates);
+                    }}
+                  />
+                  <Label htmlFor="has_unit_complement">Possui complemento?</Label>
+                </div>
+                {data.has_unit_complement && (
+                  <div className="space-y-2">
+                    <Label htmlFor="unit_address_complement">Complemento *</Label>
+                    <Input
+                      id="unit_address_complement"
+                      placeholder="Apartamento, sala, etc."
+                      value={data.unit_address_complement === "Sem Complemento" ? "" : data.unit_address_complement}
+                      onChange={(e) => onUpdate({ unit_address_complement: e.target.value })}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

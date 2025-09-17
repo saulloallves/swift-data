@@ -43,6 +43,7 @@ export interface OnboardingFormData {
   unit_address: string;
   unit_number_address: string;
   unit_address_complement: string;
+  has_unit_complement: boolean;
   unit_neighborhood: string;
   unit_city: string;
   unit_state: string;
@@ -118,6 +119,7 @@ const initialFormData: OnboardingFormData = {
   unit_address: "",
   unit_number_address: "",
   unit_address_complement: "",
+  has_unit_complement: false,
   unit_neighborhood: "",
   unit_city: "",
   unit_state: "",
