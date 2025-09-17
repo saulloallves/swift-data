@@ -298,7 +298,6 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="md:col-span-2 space-y-2">
-          <Label>Foto de Perfil</Label>
           <ImageDropzone
             value={data.profile_image}
             onChange={(url) => onUpdate({ profile_image: url })}
