@@ -11,7 +11,7 @@ import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCpf, cleanCpf } from "@/lib/utils";
+import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber } from "@/lib/utils";
 
 interface PersonalDataStepProps {
   data: OnboardingFormData;
@@ -174,8 +174,16 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           <Input
             id="contact"
             placeholder="(11) 99999-9999"
-            value={data.contact}
-            onChange={(e) => onUpdate({ contact: e.target.value })}
+            value={formatPhoneNumber(data.contact)}
+            onChange={(e) => {
+              const formatted = formatPhoneNumber(e.target.value);
+              onUpdate({ contact: formatted });
+            }}
+            onBlur={(e) => {
+              const cleaned = cleanPhoneNumber(e.target.value);
+              onUpdate({ contact: cleaned });
+            }}
+            maxLength={15}
           />
         </div>
 
