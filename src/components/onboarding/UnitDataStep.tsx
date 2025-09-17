@@ -227,7 +227,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               {data.store_phase === "implantacao" && (
                 <div className="space-y-2">
-                  <Label htmlFor="store_imp_phase">Fase de Implementação *</Label>
+                  <Label htmlFor="store_imp_phase">Fase de Implantação *</Label>
                   <Select
                     value={data.store_imp_phase}
                     onValueChange={(value) => onUpdate({ store_imp_phase: value })}
