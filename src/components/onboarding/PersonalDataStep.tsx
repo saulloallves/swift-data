@@ -105,7 +105,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     if (!data.franchisee_postal_code) errors.push("CEP");
     if (!data.franchisee_address) errors.push("Logradouro");
     if (!data.franchisee_number_address) errors.push("Número");
-    if (!data.franchisee_address_complement) errors.push("Complemento");
+    if (data.has_complement && !data.franchisee_address_complement) errors.push("Complemento");
     if (!data.franchisee_neighborhood) errors.push("Bairro");
     if (!data.franchisee_city) errors.push("Cidade");
     if (!data.franchisee_state) errors.push("Estado");
@@ -352,13 +352,31 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address_complement">Complemento *</Label>
-            <Input
-              id="address_complement"
-              placeholder="Apto, Sala, etc."
-              value={data.franchisee_address_complement}
-              onChange={(e) => onUpdate({ franchisee_address_complement: e.target.value })}
-            />
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="has_complement"
+                checked={data.has_complement}
+                onCheckedChange={(checked) => {
+                  onUpdate({ 
+                    has_complement: checked as boolean,
+                    franchisee_address_complement: checked ? "" : "Sem Complemento"
+                  });
+                }}
+              />
+              <Label htmlFor="has_complement">Possui complemento?</Label>
+            </div>
+            
+            {data.has_complement && (
+              <div className="space-y-2">
+                <Label htmlFor="address_complement">Complemento *</Label>
+                <Input
+                  id="address_complement"
+                  placeholder="Apto, Sala, etc."
+                  value={data.franchisee_address_complement}
+                  onChange={(e) => onUpdate({ franchisee_address_complement: e.target.value })}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

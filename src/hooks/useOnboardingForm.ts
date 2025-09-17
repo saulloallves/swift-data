@@ -32,6 +32,7 @@ export interface OnboardingFormData {
   franchisee_address: string;
   franchisee_number_address: string;
   franchisee_address_complement: string;
+  has_complement: boolean;
   franchisee_neighborhood: string;
   franchisee_city: string;
   franchisee_state: string;
@@ -108,6 +109,7 @@ const initialFormData: OnboardingFormData = {
   franchisee_address: "",
   franchisee_number_address: "",
   franchisee_address_complement: "",
+  has_complement: false,
   franchisee_neighborhood: "",
   franchisee_city: "",
   franchisee_state: "",
