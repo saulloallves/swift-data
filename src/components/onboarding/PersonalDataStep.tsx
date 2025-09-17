@@ -147,12 +147,15 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
         <div className="space-y-2">
           <Label htmlFor="nationality">Nacionalidade</Label>
-          <Input
-            id="nationality"
-            placeholder="Nacionalidade"
-            value={data.nationality}
-            onChange={(e) => onUpdate({ nationality: e.target.value })}
-          />
+          <Select value={data.nationality} onValueChange={(value) => onUpdate({ nationality: value })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Brasileiro(a)">Brasileiro(a)</SelectItem>
+              <SelectItem value="Estrangeiro(a)">Estrangeiro(a)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
