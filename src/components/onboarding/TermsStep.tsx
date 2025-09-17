@@ -2,9 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, FileText, Shield, UserCheck } from "lucide-react";
+import { Loader2, FileText, Shield, UserCheck, ExternalLink } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { termsData } from "@/data/termsData";
 
 interface TermsStepProps {
   data: OnboardingFormData;
@@ -15,12 +18,39 @@ interface TermsStepProps {
 }
 
 export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }: TermsStepProps) => {
+  const navigate = useNavigate();
+
+  // Check for accepted terms in localStorage on component mount
+  useEffect(() => {
+    const systemAccepted = localStorage.getItem("term_accepted_system") === "true";
+    const confidentialityAccepted = localStorage.getItem("term_accepted_confidentiality") === "true";
+    const lgpdAccepted = localStorage.getItem("term_accepted_lgpd") === "true";
+
+    if (systemAccepted && !data.system_term_accepted) {
+      onUpdate({ system_term_accepted: true });
+      localStorage.removeItem("term_accepted_system");
+    }
+    if (confidentialityAccepted && !data.confidentiality_term_accepted) {
+      onUpdate({ confidentiality_term_accepted: true });
+      localStorage.removeItem("term_accepted_confidentiality");
+    }
+    if (lgpdAccepted && !data.lgpd_term_accepted) {
+      onUpdate({ lgpd_term_accepted: true });
+      localStorage.removeItem("term_accepted_lgpd");
+    }
+  }, [data, onUpdate]);
+
   const handleSubmit = () => {
     if (!data.system_term_accepted || !data.confidentiality_term_accepted || !data.lgpd_term_accepted) {
       toast.error("Você deve aceitar todos os termos para continuar");
       return;
     }
     onSubmit();
+  };
+
+  const handleTermClick = (termKey: string) => {
+    const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    navigate(`/terms/${termKey}?return=${currentUrl}`);
   };
 
   const allTermsAccepted = data.system_term_accepted && data.confidentiality_term_accepted && data.lgpd_term_accepted;
@@ -43,11 +73,20 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
               <FileText className="h-5 w-5 text-primary mt-1" />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-foreground">Termo de Uso do Sistema</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Aceito os termos de uso da plataforma e sistema de gestão da franquia
                     </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto mt-2 text-primary hover:text-primary/80"
+                      onClick={() => handleTermClick("system")}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Clique para ler o termo completo
+                    </Button>
                   </div>
                   <Checkbox
                     id="system_term"
@@ -66,11 +105,20 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
               <Shield className="h-5 w-5 text-primary mt-1" />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-foreground">Termo de Confidencialidade</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Comprometo-me a manter sigilo sobre informações confidenciais da franquia
                     </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto mt-2 text-primary hover:text-primary/80"
+                      onClick={() => handleTermClick("confidentiality")}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Clique para ler o termo completo
+                    </Button>
                   </div>
                   <Checkbox
                     id="confidentiality_term"
@@ -89,11 +137,20 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
               <UserCheck className="h-5 w-5 text-primary mt-1" />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-foreground">Termo LGPD</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Autorizo o tratamento dos meus dados pessoais conforme a Lei Geral de Proteção de Dados
                     </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="p-0 h-auto mt-2 text-primary hover:text-primary/80"
+                      onClick={() => handleTermClick("lgpd")}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Clique para ler o termo completo
+                    </Button>
                   </div>
                   <Checkbox
                     id="lgpd_term"
