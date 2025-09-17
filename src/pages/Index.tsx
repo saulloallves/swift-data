@@ -9,6 +9,7 @@ import { SuccessStep } from "@/components/onboarding/SuccessStep";
 import { StepIndicator } from "@/components/onboarding/StepIndicator";
 import { useOnboardingForm } from "@/hooks/useOnboardingForm";
 import heroImage from "@/assets/onboarding-hero.jpg";
+import logoCP from "@/assets/logo-cresci-perdi.png";
 
 export type OnboardingStep = "personal" | "unit" | "terms" | "success";
 
@@ -101,7 +102,12 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mb-6">
+            <div className="mb-6 flex flex-col items-center gap-4">
+              <img 
+                src={logoCP} 
+                alt="Cresci e Perdi" 
+                className="h-16 w-auto"
+              />
               <img 
                 src={heroImage} 
                 alt="Cadastro de Franqueado" 
