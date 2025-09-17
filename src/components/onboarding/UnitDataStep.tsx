@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCnpj, cleanCnpj } from "@/lib/utils";
+import { formatCnpj, cleanCnpj, formatCep, cleanCep } from "@/lib/utils";
 
 interface UnitDataStepProps {
   data: OnboardingFormData;
@@ -62,12 +62,13 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   };
 
   const handleCepLookup = async (cep: string) => {
-    if (cep.length !== 8) return;
+    const cleanedCep = cleanCep(cep);
+    if (cleanedCep.length !== 8) return;
 
     setIsLoadingCep(true);
     try {
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
-        body: { type: 'cep', value: cep }
+        body: { type: 'cep', value: cleanedCep }
       });
 
       if (error) throw error;
@@ -103,7 +104,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
   const handleSubmit = () => {
     const cleanedCnpj = cleanCnpj(data.cnpj || "");
-    if (!cleanedCnpj || !data.group_name || !data.group_code || !data.unit_postal_code || !data.unit_address || !data.unit_city) {
+    const cleanedCep = cleanCep(data.unit_postal_code || "");
+    if (!cleanedCnpj || !data.group_name || !data.group_code || !cleanedCep || !data.unit_address || !data.unit_city) {
       toast.error("Preencha todos os campos obrigatórios da unidade e endereço");
       return;
     }
@@ -236,10 +238,13 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   <Input
                     id="unit_postal_code"
                     placeholder="00000-000"
-                    value={data.unit_postal_code}
-                    onChange={(e) => onUpdate({ unit_postal_code: e.target.value })}
+                    value={formatCep(data.unit_postal_code || "")}
+                    onChange={(e) => {
+                      const cleanedValue = cleanCep(e.target.value);
+                      onUpdate({ unit_postal_code: cleanedValue });
+                    }}
                     onBlur={(e) => handleCepLookup(e.target.value)}
-                    maxLength={8}
+                    maxLength={9}
                     className={isLoadingCep ? "api-loading" : ""}
                   />
                   {isLoadingCep && (

@@ -115,3 +115,20 @@ export function cleanCnpj(value: string): string {
   // Remove todos os caracteres não numéricos
   return value.replace(/\D/g, '');
 }
+
+export function formatCep(value: string): string {
+  // Remove todos os caracteres não numéricos
+  const numbers = value.replace(/\D/g, '');
+  
+  // Aplica a máscara 00000-000
+  if (numbers.length <= 5) {
+    return numbers;
+  } else {
+    return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
+  }
+}
+
+export function cleanCep(value: string): string {
+  // Remove todos os caracteres não numéricos
+  return value.replace(/\D/g, '');
+}
