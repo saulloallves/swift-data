@@ -1,1 +1,4 @@
-project_id = "zqexpclhdrbnevxheiax"
+project_id = "wynddacvlebjubieruni"
+
+[functions.api-lookup]
+verify_jwt = false
