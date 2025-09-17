@@ -96,18 +96,22 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div 
+      className="min-h-screen bg-background relative"
+      style={{
+        backgroundImage: `url(${heroImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Background overlay for readability */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+      
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="mb-6">
-              <img 
-                src={heroImage} 
-                alt="Cadastro de Franqueado" 
-                className="w-full max-w-md mx-auto rounded-lg shadow-lg"
-              />
-            </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Cadastro de Franqueado
             </h1>
