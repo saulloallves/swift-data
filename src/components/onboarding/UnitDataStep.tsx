@@ -110,11 +110,18 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     const hasValidComplement = !data.has_unit_complement || 
       (data.has_unit_complement && data.unit_address_complement && data.unit_address_complement !== "Sem Complemento");
     
-    if (!cleanedCnpj || !data.group_name || !data.group_code || !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement) {
+    // Validação da fase de implementação quando a fase é implantação
+    const hasValidImplementationPhase = data.store_phase !== "implantacao" || 
+      (data.store_phase === "implantacao" && data.store_imp_phase);
+    
+    if (!cleanedCnpj || !data.group_name || !data.group_code || !data.store_model || !data.store_phase || !hasValidImplementationPhase || !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement) {
       const missingFields = [];
       if (!cleanedCnpj) missingFields.push("CNPJ");
       if (!data.group_name) missingFields.push("Nome da Unidade");
       if (!data.group_code) missingFields.push("Código da Unidade");
+      if (!data.store_model) missingFields.push("Modelo da Loja");
+      if (!data.store_phase) missingFields.push("Fase da Loja");
+      if (!hasValidImplementationPhase) missingFields.push("Fase de Implementação");
       if (!cleanedCep) missingFields.push("CEP");
       if (!data.unit_address) missingFields.push("Logradouro");
       if (!data.unit_city) missingFields.push("Cidade");
@@ -178,7 +185,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store_model">Modelo da Loja</Label>
+                <Label htmlFor="store_model">Modelo da Loja *</Label>
                 <Select
                   value={data.store_model}
                   onValueChange={(value) => onUpdate({ store_model: value })}
@@ -197,7 +204,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store_phase">Fase da Loja</Label>
+                <Label htmlFor="store_phase">Fase da Loja *</Label>
                 <Select
                   value={data.store_phase}
                   onValueChange={(value) => {
@@ -220,7 +227,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               {data.store_phase === "implantacao" && (
                 <div className="space-y-2">
-                  <Label htmlFor="store_imp_phase">Fase de Implementação</Label>
+                  <Label htmlFor="store_imp_phase">Fase de Implementação *</Label>
                   <Select
                     value={data.store_imp_phase}
                     onValueChange={(value) => onUpdate({ store_imp_phase: value })}
