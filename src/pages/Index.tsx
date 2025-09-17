@@ -106,7 +106,7 @@ const Index = () => {
               <img 
                 src={logoCP} 
                 alt="Cresci e Perdi" 
-                className="h-16 w-auto"
+                className="h-20 w-auto"
               />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
