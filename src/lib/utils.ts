@@ -48,10 +48,13 @@ export function cleanPhoneNumber(value: string): string {
 export function formatCurrency(value: string | number): string {
   // Se for número, converte para string formatada
   if (typeof value === 'number') {
-    return value.toLocaleString('pt-BR', {
+    // Aplica limite máximo de 10 milhões
+    const limitedValue = Math.min(value, 10000000);
+    return limitedValue.toLocaleString('pt-BR', {
       style: 'currency',
       currency: 'BRL',
       minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
   }
   
@@ -63,13 +66,17 @@ export function formatCurrency(value: string | number): string {
   }
   
   // Converte para número (centavos) e depois para reais
-  const numberValue = parseInt(numbers) / 100;
+  let numberValue = parseInt(numbers) / 100;
+  
+  // Aplica limite máximo de 10 milhões
+  numberValue = Math.min(numberValue, 10000000);
   
   // Formata para moeda brasileira
   return numberValue.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   });
 }
 
@@ -80,5 +87,8 @@ export function cleanCurrency(value: string): number {
   if (!numbers) return 0;
   
   // Converte para número dividindo por 100 (centavos)
-  return parseInt(numbers) / 100;
+  let numberValue = parseInt(numbers) / 100;
+  
+  // Aplica limite máximo de 10 milhões
+  return Math.min(numberValue, 10000000);
 }
