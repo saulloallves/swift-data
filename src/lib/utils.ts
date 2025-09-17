@@ -49,7 +49,7 @@ export function formatCurrency(value: string | number): string {
   // Converte para string e remove caracteres não numéricos
   const numbers = value.toString().replace(/\D/g, '');
   
-  if (!numbers || numbers === '0') {
+  if (!numbers) {
     return 'R$ 0,00';
   }
   
