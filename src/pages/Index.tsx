@@ -7,11 +7,11 @@ import { UnitDataStep } from "@/components/onboarding/UnitDataStep";
 import { TermsStep } from "@/components/onboarding/TermsStep";
 import { SuccessStep } from "@/components/onboarding/SuccessStep";
 import { StepIndicator } from "@/components/onboarding/StepIndicator";
+import { WelcomeStep } from "@/components/onboarding/WelcomeStep";
 import { useOnboardingForm } from "@/hooks/useOnboardingForm";
-import heroImage from "@/assets/onboarding-hero.jpg";
 import logoCP from "@/assets/logo-cresci-perdi.png";
 
-export type OnboardingStep = "personal" | "unit" | "terms" | "success";
+export type OnboardingStep = "welcome" | "personal" | "unit" | "terms" | "success";
 
 const steps: Array<{ key: OnboardingStep; title: string; description: string }> = [
   { key: "personal", title: "Dados Pessoais", description: "Informações básicas e endereço pessoal" },
@@ -21,7 +21,7 @@ const steps: Array<{ key: OnboardingStep; title: string; description: string }> 
 ];
 
 const Index = () => {
-  const [currentStep, setCurrentStep] = useState<OnboardingStep>("personal");
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
   const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, isSubmitting, franchiseeId } = useOnboardingForm();
 
@@ -29,7 +29,9 @@ const Index = () => {
   const progress = currentStep === "success" ? 100 : ((currentStepIndex + 1) / (steps.length - 1)) * 100;
 
   const handleNext = () => {
-    if (currentStep === "personal") {
+    if (currentStep === "welcome") {
+      setCurrentStep("personal");
+    } else if (currentStep === "personal") {
       setCurrentStep("unit");
     } else if (currentStep === "unit") {
       if (isAddingNewUnit) {
@@ -70,6 +72,8 @@ const Index = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
+      case "welcome":
+        return <WelcomeStep onNext={handleNext} />;
       case "personal":
         return (
           <PersonalDataStep
@@ -104,10 +108,10 @@ const Index = () => {
     }
   };
 
-  if (currentStep === "success") {
+  if (currentStep === "welcome" || currentStep === "success") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <SuccessStep onAddNewUnit={franchiseeId ? handleAddNewUnit : undefined} />
+        {renderCurrentStep()}
       </div>
     );
   }
