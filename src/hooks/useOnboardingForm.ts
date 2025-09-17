@@ -161,38 +161,55 @@ export const useOnboardingForm = () => {
     setIsSubmitting(true);
     
     try {
+      // Validações básicas
+      if (!formData.cpf_rnm || !formData.full_name) {
+        toast.error("CPF e nome completo são obrigatórios");
+        return false;
+      }
+
+      if (!formData.group_code || formData.group_code <= 0) {
+        toast.error("Código do grupo é obrigatório e deve ser maior que 0");
+        return false;
+      }
+
+      // Validar estacionamento parceiro se estiver habilitado
+      if (formData.has_partner_parking && !formData.partner_parking_address) {
+        toast.error("Endereço do estacionamento parceiro é obrigatório quando estacionamento parceiro está habilitado");
+        return false;
+      }
+
       // Prepare franchisee data
       const franchiseeData = {
         cpf_rnm: formData.cpf_rnm,
         full_name: formData.full_name,
-        birth_date: formData.birth_date,
-        email: formData.franchisee_email,
+        birth_date: formData.birth_date || null,
+        email: formData.franchisee_email || null,
         contact: formData.contact,
-        nationality: formData.nationality,
+        nationality: formData.nationality || null,
         owner_type: formData.owner_type,
-        education: formData.education,
-        previous_profession: formData.previous_profession,
-        previous_salary_range: formData.previous_salary_range,
+        education: formData.education || null,
+        previous_profession: formData.previous_profession || null,
+        previous_salary_range: formData.previous_salary_range || null,
         was_entrepreneur: formData.was_entrepreneur,
-        availability: formData.availability,
-        discovery_source: formData.discovery_source,
+        availability: formData.availability || null,
+        discovery_source: formData.discovery_source || null,
         was_referred: formData.was_referred,
-        referrer_name: formData.referrer_name,
-        referrer_unit_code: formData.referrer_unit_code,
+        referrer_name: formData.referrer_name || null,
+        referrer_unit_code: formData.referrer_unit_code || null,
         has_other_activities: formData.has_other_activities,
-        other_activities_description: formData.other_activities_description,
+        other_activities_description: formData.other_activities_description || null,
         receives_prolabore: formData.receives_prolabore,
-        prolabore_value: formData.prolabore_value,
-        profile_image: formData.profile_image,
-        instagram: formData.instagram,
-        address: formData.franchisee_address,
-        number_address: formData.franchisee_number_address,
-        address_complement: formData.franchisee_address_complement,
-        neighborhood: formData.franchisee_neighborhood,
-        city: formData.franchisee_city,
-        state: formData.franchisee_state,
-        uf: formData.franchisee_uf,
-        postal_code: formData.franchisee_postal_code,
+        prolabore_value: formData.prolabore_value || null,
+        profile_image: formData.profile_image || null,
+        instagram: formData.instagram || null,
+        address: formData.franchisee_address || null,
+        number_address: formData.franchisee_number_address || null,
+        address_complement: formData.franchisee_address_complement || null,
+        neighborhood: formData.franchisee_neighborhood || null,
+        city: formData.franchisee_city || null,
+        state: formData.franchisee_state || null,
+        uf: formData.franchisee_uf || null,
+        postal_code: formData.franchisee_postal_code || null,
         system_term_accepted: formData.system_term_accepted,
         confidentiality_term_accepted: formData.confidentiality_term_accepted,
         lgpd_term_accepted: formData.lgpd_term_accepted,
@@ -202,56 +219,72 @@ export const useOnboardingForm = () => {
 
       // Prepare unit data
       const unitData = {
-        cnpj: formData.cnpj,
-        fantasy_name: formData.fantasy_name,
+        cnpj: formData.cnpj || null,
+        fantasy_name: formData.fantasy_name || null,
         group_name: formData.group_name,
         group_code: formData.group_code,
         store_model: formData.store_model,
         store_phase: formData.store_phase,
-        store_imp_phase: formData.store_imp_phase,
-        email: formData.email,
-        phone: formData.phone,
-        instagram_profile: formData.instagram_profile,
+        store_imp_phase: formData.store_imp_phase || null,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        instagram_profile: formData.instagram_profile || null,
         has_parking: formData.has_parking,
-        parking_spots: formData.parking_spots,
+        parking_spots: formData.parking_spots || null,
         has_partner_parking: formData.has_partner_parking,
-        partner_parking_address: formData.partner_parking_address,
+        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
         purchases_active: formData.purchases_active,
         sales_active: formData.sales_active,
-        address: formData.unit_address,
-        number_address: formData.unit_number_address,
-        address_complement: formData.unit_address_complement,
-        neighborhood: formData.unit_neighborhood,
-        city: formData.unit_city,
-        state: formData.unit_state,
-        uf: formData.unit_uf,
-        postal_code: formData.unit_postal_code,
-        operation_mon: formData.operation_mon,
-        operation_tue: formData.operation_tue,
-        operation_wed: formData.operation_wed,
-        operation_thu: formData.operation_thu,
-        operation_fri: formData.operation_fri,
-        operation_sat: formData.operation_sat,
-        operation_sun: formData.operation_sun,
-        operation_hol: formData.operation_hol,
+        address: formData.unit_address || null,
+        number_address: formData.unit_number_address || null,
+        address_complement: formData.unit_address_complement || null,
+        neighborhood: formData.unit_neighborhood || null,
+        city: formData.unit_city || null,
+        state: formData.unit_state || null,
+        uf: formData.unit_uf || null,
+        postal_code: formData.unit_postal_code || null,
+        operation_mon: formData.operation_mon || null,
+        operation_tue: formData.operation_tue || null,
+        operation_wed: formData.operation_wed || null,
+        operation_thu: formData.operation_thu || null,
+        operation_fri: formData.operation_fri || null,
+        operation_sat: formData.operation_sat || null,
+        operation_sun: formData.operation_sun || null,
+        operation_hol: formData.operation_hol || null,
         is_active: true,
       };
 
-      // Execute both upserts in parallel and return the data
-      const [franchiseeResult, unitResult] = await Promise.all([
-        supabase.from('franqueados').upsert(franchiseeData, { onConflict: 'cpf_rnm' }).select('id').single(),
-        supabase.from('unidades').upsert(unitData, { onConflict: 'cnpj' }).select('id').single()
-      ]);
+      // Insert franchisee first
+      const franchiseeResult = await supabase
+        .from('franqueados')
+        .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
+        .select('id')
+        .single();
 
       if (franchiseeResult.error) {
         console.error('Franchisee upsert error:', franchiseeResult.error);
-        toast.error(`Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}`);
+        if (franchiseeResult.error.code === '23505') {
+          toast.error("CPF já cadastrado no sistema");
+        } else {
+          toast.error(`Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}`);
+        }
         return false;
       }
 
+      // Insert unit
+      const unitResult = await supabase
+        .from('unidades')
+        .upsert(unitData, { onConflict: 'group_code' })
+        .select('id')
+        .single();
+
       if (unitResult.error) {
         console.error('Unit upsert error:', unitResult.error);
-        toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
+        if (unitResult.error.code === '23505') {
+          toast.error("Código do grupo já cadastrado no sistema");
+        } else {
+          toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
+        }
         return false;
       }
 
@@ -261,20 +294,18 @@ export const useOnboardingForm = () => {
 
       const relationshipResult = await supabase
         .from('franqueados_unidades')
-        .upsert(
-          { 
-            franqueado_id: franchiseeId, 
-            unidade_id: unitId 
-          },
-          { 
-            onConflict: 'franqueado_id,unidade_id' 
-          }
-        );
+        .insert({ 
+          franqueado_id: franchiseeId, 
+          unidade_id: unitId 
+        });
 
       if (relationshipResult.error) {
-        console.error('Relationship upsert error:', relationshipResult.error);
-        toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
-        return false;
+        console.error('Relationship insert error:', relationshipResult.error);
+        // Se o relacionamento já existe, não é um erro crítico
+        if (relationshipResult.error.code !== '23505') {
+          toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
+          return false;
+        }
       }
 
       toast.success("Cadastro realizado com sucesso!");
@@ -282,7 +313,7 @@ export const useOnboardingForm = () => {
       
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error("Erro inesperado ao submeter o formulário");
+      toast.error("Erro inesperado ao submeter o formulário. Verifique os dados e tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);

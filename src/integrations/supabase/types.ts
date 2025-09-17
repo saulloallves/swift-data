@@ -414,15 +414,7 @@ export type Database = {
           group_name?: string | null
           ultimo_evento?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "evento_seguidores_group_code_fkey"
-            columns: ["group_code"]
-            isOneToOne: true
-            referencedRelation: "unidades"
-            referencedColumns: ["group_code"]
-          },
-        ]
+        Relationships: []
       }
       franqueados: {
         Row: {
@@ -581,22 +573,7 @@ export type Database = {
           user_agent?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "franqueados_audit_log_franqueado_id_fkey"
-            columns: ["franqueado_id"]
-            isOneToOne: false
-            referencedRelation: "franqueados"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "franqueados_audit_log_franqueado_id_fkey"
-            columns: ["franqueado_id"]
-            isOneToOne: false
-            referencedRelation: "v_franqueados_unidades_detalhes"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       franqueados_filhos: {
         Row: {
@@ -686,29 +663,7 @@ export type Database = {
           unidade_id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "franqueados_unidades_franqueado_id_fkey"
-            columns: ["franqueado_id"]
-            isOneToOne: false
-            referencedRelation: "franqueados"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "franqueados_unidades_franqueado_id_fkey"
-            columns: ["franqueado_id"]
-            isOneToOne: false
-            referencedRelation: "v_franqueados_unidades_detalhes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "franqueados_unidades_unidade_id_fkey"
-            columns: ["unidade_id"]
-            isOneToOne: false
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       permissoes: {
         Row: {
@@ -890,13 +845,6 @@ export type Database = {
             referencedRelation: "unidades_grupos_whatsapp"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tipos_grupos_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: true
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
         ]
       }
       unidades: {
@@ -1056,15 +1004,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["whatsapp_group_kind_enum"]
           unit_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "unidades_grupos_whatsapp_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "unidades"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1089,43 +1029,7 @@ export type Database = {
       }
     }
     Views: {
-      v_franqueados_unidades_detalhes: {
-        Row: {
-          address: string | null
-          availability: string | null
-          birth_date: string | null
-          confidentiality_term_accepted: boolean | null
-          contact: string | null
-          cpf_rnm: string | null
-          created_at: string | null
-          discovery_source: string | null
-          education: string | null
-          full_name: string | null
-          has_other_activities: boolean | null
-          id: string | null
-          is_in_contract: boolean | null
-          lgpd_term_accepted: boolean | null
-          nationality: string | null
-          other_activities_description: string | null
-          owner_type: string | null
-          previous_profession: string | null
-          previous_salary_range: string | null
-          profile_image: string | null
-          prolabore_value: number | null
-          receives_prolabore: boolean | null
-          referrer_name: string | null
-          referrer_unit_code: string | null
-          system_term_accepted: boolean | null
-          total_unidades: number | null
-          unidade_group_codes: number[] | null
-          unidade_group_names: string[] | null
-          unidade_ids: string[] | null
-          updated_at: string | null
-          was_entrepreneur: boolean | null
-          was_referred: boolean | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       can_access_sensitive_data: {
