@@ -61,7 +61,7 @@ export const SuccessStep = ({ onAddNewUnit }: SuccessStepProps) => {
                 entre em contato conosco através do suporte.
               </p>
               
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 {onAddNewUnit && (
                   <Button onClick={onAddNewUnit} variant="outline" className="gap-2">
                     <Plus className="h-4 w-4" />
@@ -70,6 +70,14 @@ export const SuccessStep = ({ onAddNewUnit }: SuccessStepProps) => {
                 )}
                 <Button onClick={handleNewRegistration} variant="secondary">
                   Novo Cadastro Completo
+                </Button>
+                <Button 
+                  onClick={() => window.open('https://girabot.com/', '_blank')}
+                  variant="default"
+                  className="gap-2"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Acessar Girabot
                 </Button>
               </div>
             </div>
