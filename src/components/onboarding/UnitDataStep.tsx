@@ -114,9 +114,16 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     const hasValidImplementationPhase = data.store_phase !== "implantacao" || 
       (data.store_phase === "implantacao" && data.store_imp_phase);
     
+    // Validação de vagas de estacionamento quando marcado
+    const hasValidParkingSpots = !data.has_parking || (data.has_parking && data.parking_spots && data.parking_spots > 0);
+    
+    // Validação de endereço do estacionamento parceiro quando marcado
+    const hasValidPartnerParking = !data.has_partner_parking || (data.has_partner_parking && data.partner_parking_address);
+    
     if (!cleanedCnpj || !data.group_name || !data.group_code || !data.store_model || !data.store_phase || !hasValidImplementationPhase || 
-        !cleanedCep || !data.unit_address || !data.unit_city || !hasValidComplement ||
-        !data.email || !data.phone || !data.instagram_profile ||
+        !cleanedCep || !data.unit_address || !data.unit_number_address || !hasValidComplement || !data.unit_neighborhood ||
+        !data.unit_city || !data.unit_state || !data.unit_uf ||
+        !data.email || !data.phone || !data.instagram_profile || !hasValidParkingSpots || !hasValidPartnerParking ||
         !data.operation_mon || !data.operation_tue || !data.operation_wed || !data.operation_thu || 
         !data.operation_fri || !data.operation_sat || !data.operation_sun || !data.operation_hol) {
       const missingFields = [];
@@ -128,11 +135,17 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (!hasValidImplementationPhase) missingFields.push("Fase de Implantação");
       if (!cleanedCep) missingFields.push("CEP");
       if (!data.unit_address) missingFields.push("Logradouro");
-      if (!data.unit_city) missingFields.push("Cidade");
+      if (!data.unit_number_address) missingFields.push("Número");
       if (!hasValidComplement) missingFields.push("Complemento");
+      if (!data.unit_neighborhood) missingFields.push("Bairro");
+      if (!data.unit_city) missingFields.push("Cidade");
+      if (!data.unit_state) missingFields.push("Estado");
+      if (!data.unit_uf) missingFields.push("UF");
       if (!data.email) missingFields.push("Email da Unidade");
       if (!data.phone) missingFields.push("Telefone da Unidade");
       if (!data.instagram_profile) missingFields.push("Instagram da Unidade");
+      if (!hasValidParkingSpots) missingFields.push("Vagas de Estacionamento");
+      if (!hasValidPartnerParking) missingFields.push("Endereço do Estacionamento Parceiro");
       if (!data.operation_mon) missingFields.push("Segunda-feira");
       if (!data.operation_tue) missingFields.push("Terça-feira");
       if (!data.operation_wed) missingFields.push("Quarta-feira");
@@ -301,7 +314,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_number_address">Número</Label>
+                <Label htmlFor="unit_number_address">Número *</Label>
                 <Input
                   id="unit_number_address"
                   placeholder="Número"
@@ -341,7 +354,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_neighborhood">Bairro</Label>
+                <Label htmlFor="unit_neighborhood">Bairro *</Label>
                 <Input
                   id="unit_neighborhood"
                   placeholder="Bairro"
@@ -366,7 +379,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_state">Estado</Label>
+                <Label htmlFor="unit_state">Estado *</Label>
                 <Input
                   id="unit_state"
                   placeholder="Estado"
@@ -377,7 +390,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_uf">UF</Label>
+                <Label htmlFor="unit_uf">UF *</Label>
                 <Input
                   id="unit_uf"
                   placeholder="UF"
@@ -441,7 +454,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               {data.has_parking && (
                 <div className="space-y-2">
-                  <Label htmlFor="parking_spots">Vagas de Estacionamento</Label>
+                  <Label htmlFor="parking_spots">Vagas de Estacionamento *</Label>
                   <Input
                     id="parking_spots"
                     type="number"
@@ -465,7 +478,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
               {data.has_partner_parking && (
                 <div className="space-y-2">
-                  <Label htmlFor="partner_parking_address">Endereço do Estacionamento Parceiro</Label>
+                  <Label htmlFor="partner_parking_address">Endereço do Estacionamento Parceiro *</Label>
                   <Input
                     id="partner_parking_address"
                     placeholder="Endereço do estacionamento parceiro"
