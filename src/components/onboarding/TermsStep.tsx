@@ -49,8 +49,11 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
   };
 
   const handleTermClick = (termKey: string) => {
-    const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
-    navigate(`/terms/${termKey}?return=${currentUrl}`);
+    // Save current form data and step to localStorage before navigating
+    localStorage.setItem("onboarding_form_data", JSON.stringify(data));
+    localStorage.setItem("onboarding_current_step", "terms");
+    
+    navigate(`/terms/${termKey}?return=${encodeURIComponent("/?step=terms")}`);
   };
 
   const allTermsAccepted = data.system_term_accepted && data.confidentiality_term_accepted && data.lgpd_term_accepted;

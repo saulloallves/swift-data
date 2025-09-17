@@ -158,7 +158,7 @@ export const useOnboardingForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [franchiseeId, setFranchiseeId] = useState<string | null>(null);
 
-  const updateFormData = (updates: Partial<OnboardingFormData>) => {
+  const updateFormData = (updates: Partial<OnboardingFormData> | OnboardingFormData) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
 

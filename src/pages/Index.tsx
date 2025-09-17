@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle } from "lucide-react";
@@ -8,7 +8,8 @@ import { TermsStep } from "@/components/onboarding/TermsStep";
 import { SuccessStep } from "@/components/onboarding/SuccessStep";
 import { StepIndicator } from "@/components/onboarding/StepIndicator";
 import { WelcomeStep } from "@/components/onboarding/WelcomeStep";
-import { useOnboardingForm } from "@/hooks/useOnboardingForm";
+import { useOnboardingForm, OnboardingFormData } from "@/hooks/useOnboardingForm";
+import { useSearchParams } from "react-router-dom";
 import logoCP from "@/assets/logo-cresci-perdi.png";
 
 export type OnboardingStep = "welcome" | "personal" | "unit" | "terms" | "success";
@@ -23,7 +24,31 @@ const steps: Array<{ key: OnboardingStep; title: string; description: string }> 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
+  const [searchParams] = useSearchParams();
   const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, isSubmitting, franchiseeId } = useOnboardingForm();
+
+  // Check for saved state and URL parameters on component mount
+  useEffect(() => {
+    const stepParam = searchParams.get("step") as OnboardingStep;
+    const savedFormData = localStorage.getItem("onboarding_form_data");
+    const savedStep = localStorage.getItem("onboarding_current_step") as OnboardingStep;
+
+    if (stepParam && savedFormData && savedStep) {
+      // Restore form data from localStorage
+      try {
+        const parsedData = JSON.parse(savedFormData);
+        // Use the complete object replacement instead of partial update
+        updateFormData(parsedData);
+        setCurrentStep(stepParam);
+        
+        // Clean up localStorage after restoring
+        localStorage.removeItem("onboarding_form_data");
+        localStorage.removeItem("onboarding_current_step");
+      } catch (error) {
+        console.error("Error parsing saved form data:", error);
+      }
+    }
+  }, [searchParams, updateFormData]);
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
   const progress = currentStep === "success" ? 100 : ((currentStepIndex + 1) / (steps.length - 1)) * 100;
