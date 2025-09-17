@@ -108,11 +108,6 @@ const Index = () => {
                 alt="Cresci e Perdi" 
                 className="h-16 w-auto"
               />
-              <img 
-                src={heroImage} 
-                alt="Cadastro de Franqueado" 
-                className="w-full max-w-md mx-auto rounded-lg shadow-lg"
-              />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Cadastro de Franqueado
