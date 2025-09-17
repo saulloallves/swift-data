@@ -11,7 +11,7 @@ import { Loader2, Search } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber } from "@/lib/utils";
+import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber, formatCurrency, cleanCurrency } from "@/lib/utils";
 
 interface PersonalDataStepProps {
   data: OnboardingFormData;
@@ -470,10 +470,16 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
             <Label htmlFor="prolabore_value">Valor do Pró-labore (R$)</Label>
             <Input
               id="prolabore_value"
-              type="number"
-              placeholder="0,00"
-              value={data.prolabore_value}
-              onChange={(e) => onUpdate({ prolabore_value: parseFloat(e.target.value) || 0 })}
+              placeholder="R$ 0,00"
+              value={formatCurrency(data.prolabore_value || 0)}
+              onChange={(e) => {
+                const formatted = formatCurrency(e.target.value);
+                onUpdate({ prolabore_value: cleanCurrency(formatted) });
+              }}
+              onBlur={(e) => {
+                const cleaned = cleanCurrency(e.target.value);
+                onUpdate({ prolabore_value: cleaned });
+              }}
             />
           </div>
         )}

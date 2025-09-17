@@ -44,3 +44,32 @@ export function cleanPhoneNumber(value: string): string {
   // Remove todos os caracteres não numéricos
   return value.replace(/\D/g, '');
 }
+
+export function formatCurrency(value: string | number): string {
+  // Converte para string e remove caracteres não numéricos
+  const numbers = value.toString().replace(/\D/g, '');
+  
+  if (!numbers || numbers === '0') {
+    return 'R$ 0,00';
+  }
+  
+  // Converte para número e divide por 100 para ter os centavos
+  const numberValue = parseInt(numbers) / 100;
+  
+  // Formata para moeda brasileira
+  return numberValue.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  });
+}
+
+export function cleanCurrency(value: string): number {
+  // Remove todos os caracteres não numéricos
+  const numbers = value.replace(/\D/g, '');
+  
+  if (!numbers) return 0;
+  
+  // Converte para número dividindo por 100 (centavos)
+  return parseInt(numbers) / 100;
+}
