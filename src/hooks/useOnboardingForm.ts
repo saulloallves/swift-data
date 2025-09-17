@@ -156,9 +156,52 @@ const initialFormData: OnboardingFormData = {
 export const useOnboardingForm = () => {
   const [formData, setFormData] = useState<OnboardingFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [franchiseeId, setFranchiseeId] = useState<string | null>(null);
 
   const updateFormData = (updates: Partial<OnboardingFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const resetUnitData = () => {
+    setFormData(prev => ({
+      ...prev,
+      // Reset unit address data
+      unit_postal_code: "",
+      unit_address: "",
+      unit_number_address: "",
+      unit_address_complement: "",
+      has_unit_complement: false,
+      unit_neighborhood: "",
+      unit_city: "",
+      unit_state: "",
+      unit_uf: "",
+      // Reset unit data
+      cnpj: "",
+      fantasy_name: "",
+      group_name: "",
+      group_code: 0,
+      store_model: "padrao",
+      store_phase: "implantacao",
+      store_imp_phase: "integracao",
+      email: "",
+      phone: "",
+      instagram_profile: "",
+      has_parking: false,
+      parking_spots: 0,
+      has_partner_parking: false,
+      partner_parking_address: "",
+      purchases_active: false,
+      sales_active: false,
+      // Reset operation hours
+      operation_mon: "",
+      operation_tue: "",
+      operation_wed: "",
+      operation_thu: "",
+      operation_fri: "",
+      operation_sat: "",
+      operation_sun: "",
+      operation_hol: "",
+    }));
   };
 
   const submitForm = async (): Promise<boolean> => {
@@ -293,7 +336,116 @@ export const useOnboardingForm = () => {
       }
 
       // Create the relationship in franqueados_unidades table
-      const franchiseeId = franchiseeResult.data.id;
+      const currentFranchiseeId = franchiseeResult.data.id;
+      const unitId = unitResult.data.id;
+
+      const relationshipResult = await supabase
+        .from('franqueados_unidades')
+        .insert({ 
+          franqueado_id: currentFranchiseeId, 
+          unidade_id: unitId 
+        });
+
+      if (relationshipResult.error) {
+        console.error('Relationship insert error:', relationshipResult.error);
+        // Se o relacionamento já existe, não é um erro crítico
+        if (relationshipResult.error.code !== '23505') {
+          toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
+          return false;
+        }
+      }
+
+      // Store franchisee ID for future unit registrations
+      setFranchiseeId(currentFranchiseeId);
+
+      toast.success("Cadastro realizado com sucesso!");
+      return true;
+      
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error("Erro inesperado ao submeter o formulário. Verifique os dados e tente novamente.");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const submitNewUnit = async (): Promise<boolean> => {
+    if (!franchiseeId) {
+      toast.error("Erro: ID do franqueado não encontrado");
+      return false;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Validações básicas para nova unidade
+      if (!formData.group_code || formData.group_code <= 0) {
+        toast.error("Código do grupo é obrigatório e deve ser maior que 0");
+        return false;
+      }
+
+      // Validar estacionamento parceiro se estiver habilitado
+      if (formData.has_partner_parking && !formData.partner_parking_address) {
+        toast.error("Endereço do estacionamento parceiro é obrigatório quando estacionamento parceiro está habilitado");
+        return false;
+      }
+
+      // Prepare unit data
+      const unitData = {
+        cnpj: formData.cnpj || null,
+        fantasy_name: formData.fantasy_name || null,
+        group_name: formData.group_name,
+        group_code: formData.group_code,
+        store_model: formData.store_model,
+        store_phase: formData.store_phase,
+        store_imp_phase: formData.store_imp_phase || null,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        instagram_profile: formData.instagram_profile || null,
+        has_parking: formData.has_parking,
+        parking_spots: formData.parking_spots || null,
+        has_partner_parking: formData.has_partner_parking,
+        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
+        purchases_active: formData.purchases_active,
+        sales_active: formData.sales_active,
+        address: formData.unit_address || null,
+        number_address: formData.unit_number_address || null,
+        address_complement: formData.unit_address_complement || null,
+        neighborhood: formData.unit_neighborhood || null,
+        city: formData.unit_city || null,
+        state: formData.unit_state || null,
+        uf: formData.unit_uf || null,
+        postal_code: formData.unit_postal_code || null,
+        operation_mon: formData.operation_mon || null,
+        operation_tue: formData.operation_tue || null,
+        operation_wed: formData.operation_wed || null,
+        operation_thu: formData.operation_thu || null,
+        operation_fri: formData.operation_fri || null,
+        operation_sat: formData.operation_sat || null,
+        operation_sun: formData.operation_sun || null,
+        operation_hol: formData.operation_hol || null,
+        is_active: true,
+      };
+
+      // Insert new unit
+      const unitResult = await supabase
+        .from('unidades')
+        .upsert(unitData, { onConflict: 'group_code' })
+        .select('id')
+        .single();
+
+      if (unitResult.error) {
+        console.error('Unit upsert error:', unitResult.error);
+        if (unitResult.error.code === '23505') {
+          toast.error("Código do grupo já cadastrado no sistema");
+        } else {
+          toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
+        }
+        return false;
+      }
+
+      // Create the relationship in franqueados_unidades table
       const unitId = unitResult.data.id;
 
       const relationshipResult = await supabase
@@ -312,12 +464,12 @@ export const useOnboardingForm = () => {
         }
       }
 
-      toast.success("Cadastro realizado com sucesso!");
+      toast.success("Nova unidade cadastrada com sucesso!");
       return true;
       
     } catch (error) {
-      console.error('Submission error:', error);
-      toast.error("Erro inesperado ao submeter o formulário. Verifique os dados e tente novamente.");
+      console.error('New unit submission error:', error);
+      toast.error("Erro inesperado ao cadastrar nova unidade. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
@@ -328,6 +480,9 @@ export const useOnboardingForm = () => {
     formData,
     updateFormData,
     submitForm,
+    submitNewUnit,
+    resetUnitData,
     isSubmitting,
+    franchiseeId,
   };
 };

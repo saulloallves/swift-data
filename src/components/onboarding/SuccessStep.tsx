@@ -1,7 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, Download, Mail } from "lucide-react";
-export const SuccessStep = () => {
+import { CheckCircle, ArrowRight, Download, Mail, Plus } from "lucide-react";
+
+interface SuccessStepProps {
+  onAddNewUnit?: () => void;
+}
+
+export const SuccessStep = ({ onAddNewUnit }: SuccessStepProps) => {
   const handleNewRegistration = () => {
     window.location.reload();
   };
@@ -56,7 +61,17 @@ export const SuccessStep = () => {
                 entre em contato conosco através do suporte.
               </p>
               
-              
+              <div className="flex gap-3 justify-center">
+                {onAddNewUnit && (
+                  <Button onClick={onAddNewUnit} variant="outline" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Nova Unidade
+                  </Button>
+                )}
+                <Button onClick={handleNewRegistration} variant="secondary">
+                  Novo Cadastro Completo
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

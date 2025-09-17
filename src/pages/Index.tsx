@@ -22,7 +22,8 @@ const steps: Array<{ key: OnboardingStep; title: string; description: string }> 
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("personal");
-  const { formData, updateFormData, submitForm, isSubmitting } = useOnboardingForm();
+  const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
+  const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, isSubmitting, franchiseeId } = useOnboardingForm();
 
   const currentStepIndex = steps.findIndex(step => step.key === currentStep);
   const progress = currentStep === "success" ? 100 : ((currentStepIndex + 1) / (steps.length - 1)) * 100;
@@ -31,7 +32,12 @@ const Index = () => {
     if (currentStep === "personal") {
       setCurrentStep("unit");
     } else if (currentStep === "unit") {
-      setCurrentStep("terms");
+      if (isAddingNewUnit) {
+        // Se está adicionando nova unidade, vai direto para submissão
+        handleSubmit();
+      } else {
+        setCurrentStep("terms");
+      }
     } else if (currentStep === "terms") {
       handleSubmit();
     }
@@ -46,10 +52,20 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
-    const success = await submitForm();
+    const success = isAddingNewUnit ? await submitNewUnit() : await submitForm();
     if (success) {
+      if (isAddingNewUnit) {
+        // Reset state after successful new unit registration
+        setIsAddingNewUnit(false);
+      }
       setCurrentStep("success");
     }
+  };
+
+  const handleAddNewUnit = () => {
+    resetUnitData();
+    setIsAddingNewUnit(true);
+    setCurrentStep("unit");
   };
 
   const renderCurrentStep = () => {
@@ -68,7 +84,7 @@ const Index = () => {
             data={formData}
             onUpdate={updateFormData}
             onNext={handleNext}
-            onPrevious={handlePrevious}
+            onPrevious={isAddingNewUnit ? undefined : handlePrevious}
           />
         );
       case "terms":
@@ -82,7 +98,7 @@ const Index = () => {
           />
         );
       case "success":
-        return <SuccessStep />;
+        return <SuccessStep onAddNewUnit={franchiseeId ? handleAddNewUnit : undefined} />;
       default:
         return null;
     }
@@ -91,7 +107,7 @@ const Index = () => {
   if (currentStep === "success") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <SuccessStep />
+        <SuccessStep onAddNewUnit={franchiseeId ? handleAddNewUnit : undefined} />
       </div>
     );
   }
@@ -110,10 +126,13 @@ const Index = () => {
               />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Cadastro de Franqueado
+              {isAddingNewUnit ? "Cadastrar Nova Unidade" : "Cadastro de Franqueado"}
             </h1>
             <p className="text-muted-foreground">
-              Complete as informações para finalizar seu cadastro
+              {isAddingNewUnit 
+                ? "Cadastre uma nova unidade para o franqueado atual"
+                : "Complete as informações para finalizar seu cadastro"
+              }
             </p>
           </div>
 
