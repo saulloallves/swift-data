@@ -208,8 +208,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   type="number"
                   placeholder="Código numérico da unidade"
                   value={data.group_code || ""}
-                  maxLength={4}
-                  onChange={(e) => onUpdate({ group_code: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 4) {
+                      onUpdate({ group_code: parseInt(value) || 0 });
+                    }
+                  }}
                 />
               </div>
 
