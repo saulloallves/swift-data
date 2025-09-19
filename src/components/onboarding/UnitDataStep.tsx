@@ -18,9 +18,6 @@ const formatOperatingHours = (value: string) => {
   // Se não tem números, retorna vazio
   if (!cleaned) return '';
   
-  // Se tem "fechado" no valor original (case insensitive), mantém
-  if (value.toLowerCase().includes('fechado')) return value;
-  
   // Formata os números progressivamente
   if (cleaned.length <= 2) {
     return cleaned;
@@ -33,10 +30,29 @@ const formatOperatingHours = (value: string) => {
   }
 };
 
-// Função para limpar horário de funcionamento (manter apenas números e "fechado")
+// Função para formatar horário com texto livre (domingo e feriados)
+const formatOperatingHoursWithText = (value: string) => {
+  // Se contém apenas números, aplica a máscara
+  if (/^\d+$/.test(value.replace(/[:\-]/g, ''))) {
+    return formatOperatingHours(value);
+  }
+  // Caso contrário, permite texto livre
+  return value;
+};
+
+// Função para limpar horário de funcionamento (manter apenas números)
 const cleanOperatingHours = (value: string) => {
-  if (value.toLowerCase().includes('fechado')) return value;
   return value.replace(/\D/g, '');
+};
+
+// Função para limpar horário com texto livre (domingo e feriados)
+const cleanOperatingHoursWithText = (value: string) => {
+  // Se contém apenas números e separadores, limpa para aplicar máscara
+  if (/^[\d:\-]+$/.test(value)) {
+    return value.replace(/\D/g, '');
+  }
+  // Caso contrário, mantém o texto original
+  return value;
 };
 
 interface UnitDataStepProps {
@@ -641,13 +657,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Label htmlFor="operation_sun">Domingo *</Label>
                 <Input
                   id="operation_sun"
-                  placeholder="08:00-18:00"
-                  value={formatOperatingHours(data.operation_sun || "")}
+                  placeholder="08:00-18:00 ou Fechado"
+                  value={formatOperatingHoursWithText(data.operation_sun || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    const cleanedValue = cleanOperatingHoursWithText(e.target.value);
                     onUpdate({ operation_sun: cleanedValue });
                   }}
-                  maxLength={11}
                 />
               </div>
 
@@ -656,12 +671,11 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_hol"
                   placeholder="08:00-18:00 ou Fechado"
-                  value={formatOperatingHours(data.operation_hol || "")}
+                  value={formatOperatingHoursWithText(data.operation_hol || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    const cleanedValue = cleanOperatingHoursWithText(e.target.value);
                     onUpdate({ operation_hol: cleanedValue });
                   }}
-                  maxLength={11}
                 />
               </div>
             </div>
