@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,52 @@ interface UnitDataStepProps {
 export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataStepProps) => {
   const [isLoadingCnpj, setIsLoadingCnpj] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [showExistingUnitModal, setShowExistingUnitModal] = useState(false);
+  const [existingUnitInfo, setExistingUnitInfo] = useState<{
+    fantasy_name: string;
+    franqueado_name: string;
+  } | null>(null);
+
+  const checkExistingCnpj = async (cnpj: string) => {
+    // Primeiro, buscar a unidade
+    const { data: unidade, error: unidadeError } = await supabase
+      .from('unidades')
+      .select('id, fantasy_name')
+      .eq('cnpj', cnpj)
+      .maybeSingle();
+
+    if (unidadeError) throw unidadeError;
+
+    if (!unidade) {
+      return { exists: false };
+    }
+
+    // Se a unidade existe, buscar o franqueado associado
+    const { data: relacao, error: relacaoError } = await supabase
+      .from('franqueados_unidades')
+      .select(`
+        franqueados(
+          full_name
+        )
+      `)
+      .eq('unidade_id', unidade.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (relacaoError) throw relacaoError;
+
+    if (relacao && relacao.franqueados) {
+      return {
+        exists: true,
+        unitData: {
+          fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
+          franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado'
+        }
+      };
+    }
+
+    return { exists: false };
+  };
 
   const handleCnpjLookup = async (cnpj: string) => {
     const cleanedCnpj = cleanCnpj(cnpj);
@@ -72,6 +119,16 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
     setIsLoadingCnpj(true);
     try {
+      // Primeiro, verificar se o CNPJ já existe no banco
+      const existingUnit = await checkExistingCnpj(cleanedCnpj);
+      
+      if (existingUnit.exists && existingUnit.unitData) {
+        setExistingUnitInfo(existingUnit.unitData);
+        setShowExistingUnitModal(true);
+        return;
+      }
+
+      // Se não existe, prosseguir com a consulta na API externa
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
         body: { type: 'cnpj', value: cleanedCnpj }
       });
