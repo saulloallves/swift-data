@@ -100,22 +100,23 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     try {
       console.log('🔍 Buscando unidades antigas para código:', groupCode);
       
-      // Buscar com filtro mais amplo para trazer mais resultados
+      // Buscar TODAS as unidades sem limite
       const { data: rawData, error } = await supabase
         .from('unidades_old' as any)
         .select('group_code, group_name')
         .not('group_code', 'is', null)
         .not('group_name', 'is', null)
-        .limit(200); // Aumentar limite para trazer mais registros
+        .order('group_code', { ascending: true }); // Ordenar por código para melhor performance
 
       if (error) {
-        console.error('Erro na consulta:', error);
+        console.error('❌ Erro na consulta:', error);
         throw error;
       }
 
-      console.log('📊 Total de registros retornados da API:', rawData?.length || 0);
+      console.log('📊 TOTAL de registros retornados da API:', rawData?.length || 0);
+      console.log('🎯 Buscando por código que contém:', groupCode);
 
-      // Filtrar no lado do cliente com lógica melhorada
+      // Filtrar no lado do cliente com lógica mais robusta
       const filteredData = (rawData || [])
         .filter((unit: any) => {
           if (!unit.group_code || !unit.group_name) return false;
@@ -123,10 +124,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
           const unitCode = unit.group_code.toString();
           const searchCode = groupCode.toString();
           
-          // Buscar por:
-          // 1. Código que começa com o valor digitado
-          // 2. Código que contém o valor digitado
-          return unitCode.startsWith(searchCode) || unitCode.includes(searchCode);
+          // Buscar unidades que contenham o código digitado
+          return unitCode.includes(searchCode);
         })
         .sort((a: any, b: any) => {
           // Priorizar resultados que começam com o código digitado
@@ -144,27 +143,32 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
           return Number(a.group_code) - Number(b.group_code);
         });
 
-      console.log('🎯 Registros filtrados:', filteredData.length);
-      console.log('📋 Primeiros 10 resultados:', filteredData.slice(0, 10));
+      console.log('🎯 Registros filtrados para "' + groupCode + '":', filteredData.length);
+      
+      // Log específico para debug das unidades mencionadas
+      const specificUnits = rawData?.filter((unit: any) => 
+        ['1130', '1132'].includes(unit.group_code?.toString())
+      );
+      console.log('🔍 Unidades específicas (1130, 1132) encontradas:', specificUnits);
 
       if (filteredData.length > 0) {
         const suggestions = filteredData
-          .slice(0, 10) // Mostrar apenas os 10 primeiros resultados mais relevantes
+          .slice(0, 15) // Mostrar até 15 resultados para não sobrecarregar a UI
           .map((unit: any) => ({
             group_code: Number(unit.group_code),
             group_name: unit.group_name
           }));
         
-        console.log('📋 Sugestões finais:', suggestions);
+        console.log('📋 Sugestões finais (até 15):', suggestions);
         setOldUnitSuggestions(suggestions);
         setShowSuggestions(true);
       } else {
-        console.log('❌ Nenhuma sugestão encontrada');
+        console.log('❌ Nenhuma sugestão encontrada para:', groupCode);
         setOldUnitSuggestions([]);
         setShowSuggestions(false);
       }
     } catch (error) {
-      console.error('Erro ao buscar unidades antigas:', error);
+      console.error('💥 Erro ao buscar unidades antigas:', error);
       setOldUnitSuggestions([]);
       setShowSuggestions(false);
     } finally {
@@ -506,7 +510,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                     className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-80 overflow-auto"
                   >
                     <div className="p-2 text-xs text-muted-foreground border-b bg-muted/50">
-                      📍 {oldUnitSuggestions.length} sugestão(ões) encontrada(s) de unidades antigas:
+                      📍 {oldUnitSuggestions.length} de até 15 sugestões (das 694 unidades disponíveis):
                     </div>
                     {oldUnitSuggestions.map((suggestion, index) => (
                       <div
@@ -528,7 +532,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                       </div>
                     ))}
                     <div className="p-2 text-xs text-muted-foreground text-center bg-muted/30">
-                      💡 Digite mais números para refinar a busca
+                      💡 Digite mais números para refinar a busca entre todas as 694 unidades
                     </div>
                   </div>
                 )}
