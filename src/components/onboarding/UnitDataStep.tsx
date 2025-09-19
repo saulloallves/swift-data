@@ -123,7 +123,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     if (!cleanedCnpj || !data.group_name || !data.group_code || !data.store_model || !data.store_phase || !hasValidImplementationPhase || 
         !cleanedCep || !data.unit_address || !data.unit_number_address || !hasValidComplement || !data.unit_neighborhood ||
         !data.unit_city || !data.unit_state || !data.unit_uf ||
-        !data.email || !data.phone || !data.instagram_profile || !hasValidParkingSpots || !hasValidPartnerParking ||
+        !data.email || !data.instagram_profile || !hasValidParkingSpots || !hasValidPartnerParking ||
         !data.operation_mon || !data.operation_tue || !data.operation_wed || !data.operation_thu || 
         !data.operation_fri || !data.operation_sat || !data.operation_sun || !data.operation_hol) {
       const missingFields = [];
@@ -142,7 +142,6 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (!data.unit_state) missingFields.push("Estado");
       if (!data.unit_uf) missingFields.push("UF");
       if (!data.email) missingFields.push("Email da Unidade");
-      if (!data.phone) missingFields.push("Telefone da Unidade");
       if (!data.instagram_profile) missingFields.push("Instagram da Unidade");
       if (!hasValidParkingSpots) missingFields.push("Vagas de Estacionamento");
       if (!hasValidPartnerParking) missingFields.push("Endereço do Estacionamento Parceiro");
@@ -427,7 +426,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Telefone da Unidade *</Label>
+                <Label htmlFor="phone">Telefone da Unidade</Label>
                 <Input
                   id="phone"
                   placeholder="(11) 99999-9999"
