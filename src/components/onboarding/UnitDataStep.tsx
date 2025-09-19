@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { debounce } from "lodash";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,102 +79,93 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   const [isLoadingOldUnits, setIsLoadingOldUnits] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const groupCodeInputRef = useRef<HTMLInputElement>(null);
+  
+  // Cache de unidades e estados de validação
+  const [allUnitsCache, setAllUnitsCache] = useState<{group_code: number, group_name: string}[]>([]);
+  const [isValidUnitSelected, setIsValidUnitSelected] = useState(false);
+  const [selectedUnitCode, setSelectedUnitCode] = useState<number | null>(null);
+  const [isCacheLoaded, setIsCacheLoaded] = useState(false);
 
-  // Debug logs para o estado do modal
-  console.log('🎭 Estado do modal:', { showExistingUnitModal, existingUnitInfo });
+  // Carregar cache de unidades na inicialização
+  useEffect(() => {
+    const loadUnitsCache = async () => {
+      if (isCacheLoaded) return;
+      
+      try {
+        console.log('📦 Carregando cache de unidades...');
+        const { data: rawData, error } = await supabase
+          .from('unidades_old' as any)
+          .select('group_code, group_name')
+          .not('group_code', 'is', null)
+          .not('group_name', 'is', null)
+          .order('group_code', { ascending: true });
 
-  // Função para buscar sugestões na tabela unidades_old
-  const searchOldUnits = async (groupCode: string) => {
-    // Só executa se o CNPJ estiver vazio
-    if (data.cnpj && data.cnpj.trim() !== '') {
-      console.log('🚫 CNPJ preenchido, não buscando sugestões');
-      return;
-    }
+        if (error) throw error;
 
+        const validUnits = (rawData || []).map((unit: any) => ({
+          group_code: Number(unit.group_code),
+          group_name: unit.group_name
+        }));
+
+        setAllUnitsCache(validUnits);
+        setIsCacheLoaded(true);
+        console.log('✅ Cache carregado:', validUnits.length, 'unidades disponíveis');
+      } catch (error) {
+        console.error('❌ Erro ao carregar cache:', error);
+      }
+    };
+
+    loadUnitsCache();
+  }, [isCacheLoaded]);
+
+  // Função para buscar sugestões usando o cache local
+  const searchOldUnits = (groupCode: string) => {
     if (!groupCode || groupCode.length < 1) {
       setOldUnitSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
-    setIsLoadingOldUnits(true);
-    try {
-      console.log('🔍 Buscando unidades antigas para código:', groupCode);
-      
-      // Buscar TODAS as unidades sem limite
-      const { data: rawData, error } = await supabase
-        .from('unidades_old' as any)
-        .select('group_code, group_name')
-        .not('group_code', 'is', null)
-        .not('group_name', 'is', null)
-        .order('group_code', { ascending: true }); // Ordenar por código para melhor performance
+    if (!isCacheLoaded) {
+      console.log('⏳ Cache ainda carregando...');
+      return;
+    }
 
-      if (error) {
-        console.error('❌ Erro na consulta:', error);
-        throw error;
-      }
-
-      console.log('📊 TOTAL de registros retornados da API:', rawData?.length || 0);
-      console.log('🎯 Buscando por código que contém:', groupCode);
-
-      // Filtrar no lado do cliente com lógica mais robusta
-      const filteredData = (rawData || [])
-        .filter((unit: any) => {
-          if (!unit.group_code || !unit.group_name) return false;
-          
-          const unitCode = unit.group_code.toString();
-          const searchCode = groupCode.toString();
-          
-          // Buscar unidades que contenham o código digitado
-          return unitCode.includes(searchCode);
-        })
-        .sort((a: any, b: any) => {
-          // Priorizar resultados que começam com o código digitado
-          const aCode = a.group_code.toString();
-          const bCode = b.group_code.toString();
-          const searchCode = groupCode.toString();
-          
-          const aStartsWith = aCode.startsWith(searchCode);
-          const bStartsWith = bCode.startsWith(searchCode);
-          
-          if (aStartsWith && !bStartsWith) return -1;
-          if (!aStartsWith && bStartsWith) return 1;
-          
-          // Se ambos começam ou não começam, ordenar numericamente
-          return Number(a.group_code) - Number(b.group_code);
-        });
-
-      console.log('🎯 Registros filtrados para "' + groupCode + '":', filteredData.length);
-      
-      // Log específico para debug das unidades mencionadas
-      const specificUnits = rawData?.filter((unit: any) => 
-        ['1130', '1132'].includes(unit.group_code?.toString())
-      );
-      console.log('🔍 Unidades específicas (1130, 1132) encontradas:', specificUnits);
-
-      if (filteredData.length > 0) {
-        const suggestions = filteredData
-          .slice(0, 15) // Mostrar até 15 resultados para não sobrecarregar a UI
-          .map((unit: any) => ({
-            group_code: Number(unit.group_code),
-            group_name: unit.group_name
-          }));
+    console.log('🔍 Buscando no cache para código:', groupCode);
+    
+    // Filtrar unidades do cache
+    const filteredData = allUnitsCache
+      .filter(unit => {
+        const unitCode = unit.group_code.toString();
+        const searchCode = groupCode.toString();
+        return unitCode.includes(searchCode);
+      })
+      .sort((a, b) => {
+        // Priorizar resultados que começam com o código digitado
+        const aCode = a.group_code.toString();
+        const bCode = b.group_code.toString();
+        const searchCode = groupCode.toString();
         
-        console.log('📋 Sugestões finais (até 15):', suggestions);
-        setOldUnitSuggestions(suggestions);
-        setShowSuggestions(true);
-      } else {
-        console.log('❌ Nenhuma sugestão encontrada para:', groupCode);
-        setOldUnitSuggestions([]);
-        setShowSuggestions(false);
-      }
-    } catch (error) {
-      console.error('💥 Erro ao buscar unidades antigas:', error);
+        const aStartsWithSearch = aCode.startsWith(searchCode);
+        const bStartsWithSearch = bCode.startsWith(searchCode);
+        
+        if (aStartsWithSearch && !bStartsWithSearch) return -1;
+        if (!aStartsWithSearch && bStartsWithSearch) return 1;
+        
+        return a.group_code - b.group_code;
+      });
+
+    console.log('🎯 Filtrados do cache:', filteredData.length);
+
+    if (filteredData.length > 0) {
+      const suggestions = filteredData.slice(0, 15);
+      setOldUnitSuggestions(suggestions);
+      setShowSuggestions(true);
+    } else {
       setOldUnitSuggestions([]);
       setShowSuggestions(false);
-    } finally {
-      setIsLoadingOldUnits(false);
     }
+  };
   };
 
   // Debounce para a busca de unidades antigas
@@ -203,12 +195,21 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   // Função para lidar com clique na sugestão
   const handleSuggestionClick = (suggestion: {group_code: number, group_name: string}) => {
     console.log('✅ Sugestão selecionada:', suggestion);
+    
+    // Marcar como unidade válida selecionada
+    setIsValidUnitSelected(true);
+    setSelectedUnitCode(suggestion.group_code);
+    
+    // Dados da unidade têm PESO MAIOR - sempre sobrescrever o nome
     onUpdate({ 
       group_code: suggestion.group_code,
-      group_name: suggestion.group_name 
+      group_name: suggestion.group_name // Nome da unidade tem prioridade
     });
+    
     setShowSuggestions(false);
     setOldUnitSuggestions([]);
+    
+    console.log('🎯 Unidade validada:', suggestion.group_code);
   };
 
   // Limpar sugestões quando CNPJ for preenchido
@@ -382,6 +383,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     const cleanedCnpj = cleanCnpj(data.cnpj || "");
     const cleanedCep = cleanCep(data.unit_postal_code || "");
     
+    // VALIDAÇÃO OBRIGATÓRIA: Verificar se unidade válida foi selecionada
+    if (data.group_code && !isValidUnitSelected) {
+      toast.error("⚠️ Você deve selecionar uma unidade válida da lista de sugestões. Não é permitido digitar códigos aleatórios.");
+      return;
+    }
+    
     // Validação do complemento quando marcado como obrigatório
     const hasValidComplement = !data.has_unit_complement || 
       (data.has_unit_complement && data.unit_address_complement && data.unit_address_complement !== "Sem Complemento");
@@ -482,21 +489,39 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   <Input
                     ref={groupCodeInputRef}
                     id="group_code"
-                    type="number"
-                    placeholder="Código numérico da unidade"
+                    placeholder="Digite para buscar (ex: 1101)"
+                    maxLength={4}
                     value={data.group_code || ""}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      if (value.length <= 4) {
-                        onUpdate({ group_code: parseInt(value) || 0 });
+                      const value = e.target.value.replace(/\D/g, '');
+                      
+                      // Invalidar seleção quando usuário digitar
+                      if (value !== selectedUnitCode?.toString()) {
+                        setIsValidUnitSelected(false);
+                        setSelectedUnitCode(null);
+                      }
+                      
+                      onUpdate({ group_code: value ? Number(value) : undefined });
+                      
+                      // Buscar sugestões se tiver pelo menos 1 dígito
+                      if (value && value.length >= 1) {
+                        debouncedSearchOldUnits(value);
+                      } else {
+                        setShowSuggestions(false);
+                        setOldUnitSuggestions([]);
                       }
                     }}
                     onFocus={() => {
-                      if (data.group_code && !data.cnpj?.trim()) {
-                        searchOldUnits(data.group_code.toString());
+                      if (data.group_code) {
+                        debouncedSearchOldUnits(data.group_code.toString());
                       }
                     }}
-                    className={isLoadingOldUnits ? "api-loading" : ""}
+                    className={`${isValidUnitSelected && data.group_code 
+                      ? "border-green-500 focus:border-green-600" 
+                      : data.group_code && !isValidUnitSelected 
+                        ? "border-destructive focus:border-destructive"
+                        : ""} ${!isCacheLoaded ? "bg-muted" : ""}`}
+                    disabled={!isCacheLoaded}
                   />
                   {isLoadingOldUnits && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />

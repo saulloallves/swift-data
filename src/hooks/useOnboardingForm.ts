@@ -214,6 +214,28 @@ export const useOnboardingForm = () => {
         return false;
       }
 
+      // VALIDAÇÃO CRÍTICA: Verificar se código de unidade existe na base de dados
+      if (formData.group_code) {
+        const { data: unitExists, error } = await supabase
+          .from('unidades_old' as any)
+          .select('group_code')
+          .eq('group_code', formData.group_code)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao validar código da unidade:', error);
+          toast.error("Erro ao validar código da unidade. Tente novamente.");
+          return false;
+        }
+
+        if (!unitExists) {
+          toast.error("Código de unidade inválido. Selecione uma unidade válida da lista de sugestões.");
+          return false;
+        }
+
+        console.log('✅ Código de unidade validado:', formData.group_code);
+      }
+
       if (!formData.group_code || formData.group_code <= 0) {
         toast.error("Código do grupo é obrigatório e deve ser maior que 0");
         return false;
@@ -384,6 +406,26 @@ export const useOnboardingForm = () => {
         toast.error("Código do grupo é obrigatório e deve ser maior que 0");
         return false;
       }
+
+      // VALIDAÇÃO CRÍTICA: Verificar se código de unidade existe na base de dados
+      const { data: unitExists, error } = await supabase
+        .from('unidades_old' as any)
+        .select('group_code')
+        .eq('group_code', formData.group_code)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Erro ao validar código da unidade:', error);
+        toast.error("Erro ao validar código da unidade. Tente novamente.");
+        return false;
+      }
+
+      if (!unitExists) {
+        toast.error("Código de unidade inválido. Selecione uma unidade válida da lista de sugestões.");
+        return false;
+      }
+
+      console.log('✅ Código de unidade validado para nova unidade:', formData.group_code);
 
       // Validar estacionamento parceiro se estiver habilitado
       if (formData.has_partner_parking && !formData.partner_parking_address) {
