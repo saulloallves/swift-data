@@ -459,17 +459,6 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="group_name">Nome da Unidade *</Label>
-                <Input
-                  id="group_name"
-                  placeholder="Nome da unidade/franquia"
-                  value={data.group_name}
-                  onChange={(e) => onUpdate({ group_name: e.target.value })}
-                  disabled={isLoadingCnpj}
-                />
-              </div>
-
               <div className="space-y-2 relative">
                 <Label htmlFor="group_code">Código da Unidade *</Label>
                 <div className="relative">
@@ -548,6 +537,17 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="group_name">Nome da Unidade *</Label>
+                <Input
+                  id="group_name"
+                  placeholder="Nome da unidade/franquia"
+                  value={data.group_name}
+                  onChange={(e) => onUpdate({ group_name: e.target.value })}
+                  disabled={isLoadingCnpj}
+                />
               </div>
 
               <div className="space-y-2">
