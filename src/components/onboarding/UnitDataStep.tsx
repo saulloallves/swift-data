@@ -73,6 +73,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
   } | null>(null);
 
   const checkExistingCnpj = async (cnpj: string) => {
+    console.log('🔍 Verificando CNPJ existente:', cnpj);
+    
     // Primeiro, buscar a unidade
     const { data: unidade, error: unidadeError } = await supabase
       .from('unidades')
@@ -80,12 +82,17 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       .eq('cnpj', cnpj)
       .maybeSingle();
 
+    console.log('📋 Resultado da consulta unidade:', { unidade, unidadeError });
+
     if (unidadeError) throw unidadeError;
 
     if (!unidade) {
+      console.log('❌ Unidade não encontrada');
       return { exists: false };
     }
 
+    console.log('✅ Unidade encontrada, buscando franqueado associado...');
+    
     // Se a unidade existe, buscar o franqueado associado
     const { data: relacao, error: relacaoError } = await supabase
       .from('franqueados_unidades')
@@ -98,36 +105,55 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       .limit(1)
       .maybeSingle();
 
+    console.log('👤 Resultado da consulta franqueado:', { relacao, relacaoError });
+
     if (relacaoError) throw relacaoError;
 
     if (relacao && relacao.franqueados) {
+      const unitData = {
+        fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
+        franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado'
+      };
+      
+      console.log('🚨 Unidade já existe! Dados:', unitData);
+      
       return {
         exists: true,
-        unitData: {
-          fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-          franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado'
-        }
+        unitData
       };
     }
 
+    console.log('❌ Relação franqueado-unidade não encontrada');
     return { exists: false };
   };
 
   const handleCnpjLookup = async (cnpj: string) => {
     const cleanedCnpj = cleanCnpj(cnpj);
-    if (cleanedCnpj.length !== 14) return;
+    console.log('🔍 CNPJ lookup iniciado:', { cnpj, cleanedCnpj, length: cleanedCnpj.length });
+    
+    if (cleanedCnpj.length !== 14) {
+      console.log('❌ CNPJ inválido, cancelando lookup');
+      return;
+    }
 
     setIsLoadingCnpj(true);
     try {
+      console.log('🚀 Verificando se CNPJ já existe no banco...');
+      
       // Primeiro, verificar se o CNPJ já existe no banco
       const existingUnit = await checkExistingCnpj(cleanedCnpj);
       
+      console.log('📊 Resultado da verificação:', existingUnit);
+      
       if (existingUnit.exists && existingUnit.unitData) {
+        console.log('🚨 CNPJ já existe! Mostrando modal...', existingUnit.unitData);
         setExistingUnitInfo(existingUnit.unitData);
         setShowExistingUnitModal(true);
         return;
       }
 
+      console.log('✅ CNPJ não existe, consultando API externa...');
+      
       // Se não existe, prosseguir com a consulta na API externa
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
         body: { type: 'cnpj', value: cleanedCnpj }
