@@ -10,6 +10,35 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatCnpj, cleanCnpj, formatCep, cleanCep, formatPhoneNumber, cleanPhoneNumber } from "@/lib/utils";
 
+// Função para formatar horário de funcionamento XX:XX-XX:XX
+const formatOperatingHours = (value: string) => {
+  // Remove tudo que não é número
+  const cleaned = value.replace(/\D/g, '');
+  
+  // Se não tem números, retorna vazio
+  if (!cleaned) return '';
+  
+  // Se tem "fechado" no valor original (case insensitive), mantém
+  if (value.toLowerCase().includes('fechado')) return value;
+  
+  // Formata os números progressivamente
+  if (cleaned.length <= 2) {
+    return cleaned;
+  } else if (cleaned.length <= 4) {
+    return `${cleaned.slice(0, 2)}:${cleaned.slice(2)}`;
+  } else if (cleaned.length <= 6) {
+    return `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}-${cleaned.slice(4)}`;
+  } else {
+    return `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}-${cleaned.slice(4, 6)}:${cleaned.slice(6, 8)}`;
+  }
+};
+
+// Função para limpar horário de funcionamento (manter apenas números e "fechado")
+const cleanOperatingHours = (value: string) => {
+  if (value.toLowerCase().includes('fechado')) return value;
+  return value.replace(/\D/g, '');
+};
+
 interface UnitDataStepProps {
   data: OnboardingFormData;
   onUpdate: (updates: Partial<OnboardingFormData>) => void;
@@ -529,8 +558,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_mon"
                   placeholder="08:00-18:00"
-                  value={data.operation_mon}
-                  onChange={(e) => onUpdate({ operation_mon: e.target.value })}
+                  value={formatOperatingHours(data.operation_mon || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_mon: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -539,8 +572,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_tue"
                   placeholder="08:00-18:00"
-                  value={data.operation_tue}
-                  onChange={(e) => onUpdate({ operation_tue: e.target.value })}
+                  value={formatOperatingHours(data.operation_tue || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_tue: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -549,8 +586,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_wed"
                   placeholder="08:00-18:00"
-                  value={data.operation_wed}
-                  onChange={(e) => onUpdate({ operation_wed: e.target.value })}
+                  value={formatOperatingHours(data.operation_wed || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_wed: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -559,8 +600,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_thu"
                   placeholder="08:00-18:00"
-                  value={data.operation_thu}
-                  onChange={(e) => onUpdate({ operation_thu: e.target.value })}
+                  value={formatOperatingHours(data.operation_thu || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_thu: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -569,8 +614,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_fri"
                   placeholder="08:00-18:00"
-                  value={data.operation_fri}
-                  onChange={(e) => onUpdate({ operation_fri: e.target.value })}
+                  value={formatOperatingHours(data.operation_fri || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_fri: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -579,8 +628,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_sat"
                   placeholder="08:00-18:00"
-                  value={data.operation_sat}
-                  onChange={(e) => onUpdate({ operation_sat: e.target.value })}
+                  value={formatOperatingHours(data.operation_sat || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_sat: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -589,8 +642,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_sun"
                   placeholder="08:00-18:00"
-                  value={data.operation_sun}
-                  onChange={(e) => onUpdate({ operation_sun: e.target.value })}
+                  value={formatOperatingHours(data.operation_sun || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_sun: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
 
@@ -599,8 +656,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 <Input
                   id="operation_hol"
                   placeholder="08:00-18:00 ou Fechado"
-                  value={data.operation_hol}
-                  onChange={(e) => onUpdate({ operation_hol: e.target.value })}
+                  value={formatOperatingHours(data.operation_hol || "")}
+                  onChange={(e) => {
+                    const cleanedValue = cleanOperatingHours(e.target.value);
+                    onUpdate({ operation_hol: cleanedValue });
+                  }}
+                  maxLength={11}
                 />
               </div>
             </div>
