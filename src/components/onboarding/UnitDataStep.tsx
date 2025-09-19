@@ -72,6 +72,9 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     franqueado_name: string;
   } | null>(null);
 
+  // Debug logs para o estado do modal
+  console.log('🎭 Estado do modal:', { showExistingUnitModal, existingUnitInfo });
+
   const checkExistingCnpj = async (cnpj: string) => {
     console.log('🔍 Verificando CNPJ existente:', cnpj);
     
@@ -149,6 +152,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
         console.log('🚨 CNPJ já existe! Mostrando modal...', existingUnit.unitData);
         setExistingUnitInfo(existingUnit.unitData);
         setShowExistingUnitModal(true);
+        console.log('🎭 Modal deveria estar aberto agora!');
         return;
       }
 
@@ -799,6 +803,36 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
           </div>
         </div>
       )}
+
+      {/* Modal de CNPJ já existente */}
+      <AlertDialog open={showExistingUnitModal} onOpenChange={setShowExistingUnitModal}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Unidade já cadastrada</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              {existingUnitInfo ? (
+                <>
+                  A unidade <strong>{existingUnitInfo.fantasy_name}</strong> já foi cadastrada por{' '}
+                  <strong>{existingUnitInfo.franqueado_name}</strong>.
+                  <br /><br />
+                  Não é possível cadastrar a mesma unidade novamente.
+                </>
+              ) : (
+                'Esta unidade já foi cadastrada por outro franqueado.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              console.log('🔄 Fechando modal...');
+              setShowExistingUnitModal(false);
+              setExistingUnitInfo(null);
+            }}>
+              Entendi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
