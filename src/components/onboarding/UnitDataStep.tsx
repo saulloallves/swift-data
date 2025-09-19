@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,9 +71,121 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     fantasy_name: string;
     franqueado_name: string;
   } | null>(null);
+  
+  // Estados para o sistema de sugestões de unidades antigas
+  const [oldUnitSuggestions, setOldUnitSuggestions] = useState<{group_code: number, group_name: string}[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingOldUnits, setIsLoadingOldUnits] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const groupCodeInputRef = useRef<HTMLInputElement>(null);
 
   // Debug logs para o estado do modal
   console.log('🎭 Estado do modal:', { showExistingUnitModal, existingUnitInfo });
+
+  // Função para buscar sugestões na tabela unidades_old
+  const searchOldUnits = async (groupCode: string) => {
+    // Só executa se o CNPJ estiver vazio
+    if (data.cnpj && data.cnpj.trim() !== '') {
+      console.log('🚫 CNPJ preenchido, não buscando sugestões');
+      return;
+    }
+
+    if (!groupCode || groupCode.length < 1) {
+      setOldUnitSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoadingOldUnits(true);
+    try {
+      console.log('🔍 Buscando unidades antigas para código:', groupCode);
+      
+      // Usar query SQL direta com casting
+      const query = supabase
+        .from('unidades_old' as any)
+        .select('group_code, group_name')
+        .limit(10);
+
+      const { data: rawData, error } = await query;
+
+      if (error) {
+        console.error('Erro na consulta:', error);
+        throw error;
+      }
+
+      // Filtrar no lado do cliente
+      const filteredData = (rawData || []).filter((unit: any) => 
+        unit.group_code && 
+        unit.group_name && 
+        unit.group_code.toString().startsWith(groupCode)
+      );
+
+      if (filteredData.length > 0) {
+        const suggestions = filteredData
+          .slice(0, 5) // Limitar a 5 resultados
+          .map((unit: any) => ({
+            group_code: Number(unit.group_code),
+            group_name: unit.group_name
+          }));
+        
+        console.log('📋 Sugestões encontradas:', suggestions);
+        setOldUnitSuggestions(suggestions);
+        setShowSuggestions(true);
+      } else {
+        setOldUnitSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar unidades antigas:', error);
+      setOldUnitSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsLoadingOldUnits(false);
+    }
+  };
+
+  // Debounce para a busca de unidades antigas
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (data.group_code) {
+        searchOldUnits(data.group_code.toString());
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [data.group_code, data.cnpj]);
+
+  // Fechar sugestões ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node) &&
+          groupCodeInputRef.current && !groupCodeInputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Função para lidar com clique na sugestão
+  const handleSuggestionClick = (suggestion: {group_code: number, group_name: string}) => {
+    console.log('✅ Sugestão selecionada:', suggestion);
+    onUpdate({ 
+      group_code: suggestion.group_code,
+      group_name: suggestion.group_name 
+    });
+    setShowSuggestions(false);
+    setOldUnitSuggestions([]);
+  };
+
+  // Limpar sugestões quando CNPJ for preenchido
+  useEffect(() => {
+    if (data.cnpj && data.cnpj.trim() !== '') {
+      setOldUnitSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [data.cnpj]);
 
   const checkExistingCnpj = async (cnpj: string) => {
     console.log('🔍 Verificando CNPJ existente:', cnpj);
@@ -332,20 +444,59 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="group_code">Código da Unidade *</Label>
-                <Input
-                  id="group_code"
-                  type="number"
-                  placeholder="Código numérico da unidade"
-                  value={data.group_code || ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.length <= 4) {
-                      onUpdate({ group_code: parseInt(value) || 0 });
-                    }
-                  }}
-                />
+                <div className="relative">
+                  <Input
+                    ref={groupCodeInputRef}
+                    id="group_code"
+                    type="number"
+                    placeholder="Código numérico da unidade"
+                    value={data.group_code || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.length <= 4) {
+                        onUpdate({ group_code: parseInt(value) || 0 });
+                      }
+                    }}
+                    onFocus={() => {
+                      if (data.group_code && !data.cnpj?.trim()) {
+                        searchOldUnits(data.group_code.toString());
+                      }
+                    }}
+                    className={isLoadingOldUnits ? "api-loading" : ""}
+                  />
+                  {isLoadingOldUnits && (
+                    <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
+                  )}
+                </div>
+                
+                {/* Dropdown de sugestões */}
+                {showSuggestions && oldUnitSuggestions.length > 0 && (
+                  <div 
+                    ref={suggestionsRef}
+                    className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                  >
+                    <div className="p-2 text-xs text-muted-foreground border-b">
+                      Sugestões de unidades antigas:
+                    </div>
+                    {oldUnitSuggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className="px-3 py-2 cursor-pointer hover:bg-muted/50 border-b last:border-b-0"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm">#{suggestion.group_code}</span>
+                          <span className="text-xs text-muted-foreground">Clique para usar</span>
+                        </div>
+                        <div className="text-sm text-foreground mt-1 truncate">
+                          {suggestion.group_name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
