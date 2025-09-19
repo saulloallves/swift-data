@@ -166,18 +166,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       setShowSuggestions(false);
     }
   };
-  };
 
   // Debounce para a busca de unidades antigas
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (data.group_code) {
-        searchOldUnits(data.group_code.toString());
-      }
-    }, 200); // Reduzido para 200ms para melhor responsividade
-
-    return () => clearTimeout(timeoutId);
-  }, [data.group_code, data.cnpj]);
+  const debouncedSearchOldUnits = useMemo(
+    () => debounce(searchOldUnits, 200),
+    [allUnitsCache, isCacheLoaded]
+  );
 
   // Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -437,9 +431,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (!data.operation_sun) missingFields.push("Domingo");
       if (!data.operation_hol) missingFields.push("Feriados");
       
-      toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`);
-      return;
+      if (missingFields.length > 0) {
+        toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`);
+        return;
+      }
     }
+    
     onNext();
   };
 
