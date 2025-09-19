@@ -126,8 +126,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       return;
     }
 
-    if (!isCacheLoaded) {
-      console.log('⏳ Cache ainda carregando...');
+    if (!isCacheLoaded || !allUnitsCache || allUnitsCache.length === 0) {
+      console.log('⏳ Cache ainda carregando ou vazio...');
       return;
     }
 
