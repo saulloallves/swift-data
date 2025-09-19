@@ -306,11 +306,10 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
       if (result?.success) {
         const fantasyName = result.data.nome || result.data.razao_social || "";
-        const dynamicGroupName = `${fantasyName} - ${data.unit_city}/${data.unit_uf}`;
         
         onUpdate({
           fantasy_name: fantasyName,
-          group_name: dynamicGroupName,
+          // REMOVIDO: não mais atualizar group_name aqui, pois o nome vem da seleção do código da unidade
         });
         toast.success("Dados da empresa encontrados");
       } else {
@@ -324,13 +323,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     }
   };
 
-  // Update group_name when city or UF changes
-  const updateGroupName = () => {
-    if (data.fantasy_name && data.unit_city && data.unit_uf) {
-      const dynamicGroupName = `${data.fantasy_name} - ${data.unit_city}/${data.unit_uf}`;
-      onUpdate({ group_name: dynamicGroupName });
-    }
-  };
+  // REMOVIDO: Função updateGroupName não é mais necessária
+  // O nome da unidade agora vem apenas da seleção do código da unidade
 
   const handleCepLookup = async (cep: string) => {
     const cleanedCep = cleanCep(cep);
@@ -355,11 +349,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
         
         onUpdate(updates);
         
-        // Update group_name if fantasy_name exists
-        if (data.fantasy_name) {
-          const dynamicGroupName = `${data.fantasy_name} - ${updates.unit_city}/${updates.unit_uf}`;
-          onUpdate({ group_name: dynamicGroupName });
-        }
+        // REMOVIDO: Não mais atualizar group_name aqui, pois o nome vem da seleção do código da unidade
         
         toast.success("Endereço encontrado e preenchido automaticamente");
       } else {
@@ -720,7 +710,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   value={data.unit_city}
                   onChange={(e) => {
                     onUpdate({ unit_city: e.target.value });
-                    setTimeout(updateGroupName, 0);
+                    // REMOVIDO: não mais atualizar group_name quando cidade muda
                   }}
                   disabled={isLoadingCep}
                 />
@@ -745,7 +735,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   value={data.unit_uf}
                   onChange={(e) => {
                     onUpdate({ unit_uf: e.target.value });
-                    setTimeout(updateGroupName, 0);
+                    // REMOVIDO: não mais atualizar group_name quando UF muda
                   }}
                   disabled={isLoadingCep}
                   maxLength={2}
