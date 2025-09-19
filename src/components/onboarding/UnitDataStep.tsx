@@ -827,6 +827,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
               console.log('🔄 Fechando modal...');
               setShowExistingUnitModal(false);
               setExistingUnitInfo(null);
+              // Limpar o campo CNPJ
+              onUpdate({ cnpj: '' });
             }}>
               Entendi
             </AlertDialogAction>
