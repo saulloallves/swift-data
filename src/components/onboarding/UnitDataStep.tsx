@@ -100,38 +100,66 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     try {
       console.log('🔍 Buscando unidades antigas para código:', groupCode);
       
-      // Usar query SQL direta com casting
-      const query = supabase
+      // Buscar com filtro mais amplo para trazer mais resultados
+      const { data: rawData, error } = await supabase
         .from('unidades_old' as any)
         .select('group_code, group_name')
-        .limit(10);
-
-      const { data: rawData, error } = await query;
+        .not('group_code', 'is', null)
+        .not('group_name', 'is', null)
+        .limit(200); // Aumentar limite para trazer mais registros
 
       if (error) {
         console.error('Erro na consulta:', error);
         throw error;
       }
 
-      // Filtrar no lado do cliente
-      const filteredData = (rawData || []).filter((unit: any) => 
-        unit.group_code && 
-        unit.group_name && 
-        unit.group_code.toString().startsWith(groupCode)
-      );
+      console.log('📊 Total de registros retornados da API:', rawData?.length || 0);
+
+      // Filtrar no lado do cliente com lógica melhorada
+      const filteredData = (rawData || [])
+        .filter((unit: any) => {
+          if (!unit.group_code || !unit.group_name) return false;
+          
+          const unitCode = unit.group_code.toString();
+          const searchCode = groupCode.toString();
+          
+          // Buscar por:
+          // 1. Código que começa com o valor digitado
+          // 2. Código que contém o valor digitado
+          return unitCode.startsWith(searchCode) || unitCode.includes(searchCode);
+        })
+        .sort((a: any, b: any) => {
+          // Priorizar resultados que começam com o código digitado
+          const aCode = a.group_code.toString();
+          const bCode = b.group_code.toString();
+          const searchCode = groupCode.toString();
+          
+          const aStartsWith = aCode.startsWith(searchCode);
+          const bStartsWith = bCode.startsWith(searchCode);
+          
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          
+          // Se ambos começam ou não começam, ordenar numericamente
+          return Number(a.group_code) - Number(b.group_code);
+        });
+
+      console.log('🎯 Registros filtrados:', filteredData.length);
+      console.log('📋 Primeiros 10 resultados:', filteredData.slice(0, 10));
 
       if (filteredData.length > 0) {
         const suggestions = filteredData
-          .slice(0, 5) // Limitar a 5 resultados
+          .slice(0, 10) // Mostrar apenas os 10 primeiros resultados mais relevantes
           .map((unit: any) => ({
             group_code: Number(unit.group_code),
             group_name: unit.group_name
           }));
         
-        console.log('📋 Sugestões encontradas:', suggestions);
+        console.log('📋 Sugestões finais:', suggestions);
         setOldUnitSuggestions(suggestions);
         setShowSuggestions(true);
       } else {
+        console.log('❌ Nenhuma sugestão encontrada');
         setOldUnitSuggestions([]);
         setShowSuggestions(false);
       }
@@ -150,7 +178,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
       if (data.group_code) {
         searchOldUnits(data.group_code.toString());
       }
-    }, 300);
+    }, 200); // Reduzido para 200ms para melhor responsividade
 
     return () => clearTimeout(timeoutId);
   }, [data.group_code, data.cnpj]);
@@ -475,26 +503,33 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                 {showSuggestions && oldUnitSuggestions.length > 0 && (
                   <div 
                     ref={suggestionsRef}
-                    className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                    className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-80 overflow-auto"
                   >
-                    <div className="p-2 text-xs text-muted-foreground border-b">
-                      Sugestões de unidades antigas:
+                    <div className="p-2 text-xs text-muted-foreground border-b bg-muted/50">
+                      📍 {oldUnitSuggestions.length} sugestão(ões) encontrada(s) de unidades antigas:
                     </div>
                     {oldUnitSuggestions.map((suggestion, index) => (
                       <div
-                        key={index}
-                        className="px-3 py-2 cursor-pointer hover:bg-muted/50 border-b last:border-b-0"
+                        key={`${suggestion.group_code}-${index}`}
+                        className="px-3 py-3 cursor-pointer hover:bg-muted/50 border-b last:border-b-0 transition-colors"
                         onClick={() => handleSuggestionClick(suggestion)}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">#{suggestion.group_code}</span>
-                          <span className="text-xs text-muted-foreground">Clique para usar</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono font-semibold text-primary">
+                            #{suggestion.group_code}
+                          </span>
+                          <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-1 rounded">
+                            Clique para usar
+                          </span>
                         </div>
-                        <div className="text-sm text-foreground mt-1 truncate">
+                        <div className="text-sm text-foreground leading-relaxed">
                           {suggestion.group_name}
                         </div>
                       </div>
                     ))}
+                    <div className="p-2 text-xs text-muted-foreground text-center bg-muted/30">
+                      💡 Digite mais números para refinar a busca
+                    </div>
                   </div>
                 )}
               </div>
