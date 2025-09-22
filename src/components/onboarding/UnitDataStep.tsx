@@ -271,6 +271,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
         console.log('📋 Relação encontrada:', { relacaoFallback, relacaoFallbackError });
 
         if (relacaoFallback?.franqueado_id) {
+          console.log('🔍 Buscando franqueado com ID:', relacaoFallback.franqueado_id);
+          
           const { data: franqueado, error: franqueadoError } = await supabase
             .from('franqueados')
             .select('full_name')
@@ -278,9 +280,27 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
             .maybeSingle();
 
           console.log('👤 Franqueado encontrado:', { franqueado, franqueadoError });
+          console.log('🔍 Auth status:', { authUser: await supabase.auth.getUser() });
+
+          if (franqueadoError) {
+            console.error('❌ Erro ao buscar franqueado:', franqueadoError);
+          }
 
           if (franqueado?.full_name) {
             franqueadoName = franqueado.full_name;
+          } else {
+            // Se não conseguiu buscar por RLS, usar função administrativa
+            console.log('🔧 Tentando função administrativa...');
+            try {
+              const { data: adminResult } = await supabase.rpc('get_franqueados_secure');
+              const franqueadoAdmin = adminResult?.find((f: any) => f.id === relacaoFallback.franqueado_id);
+              if (franqueadoAdmin?.full_name) {
+                franqueadoName = franqueadoAdmin.full_name;
+                console.log('✅ Nome encontrado via função administrativa:', franqueadoName);
+              }
+            } catch (adminError) {
+              console.error('❌ Erro na função administrativa:', adminError);
+            }
           }
         }
       }
