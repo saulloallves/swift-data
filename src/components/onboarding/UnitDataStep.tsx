@@ -74,6 +74,9 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     fantasy_name: string;
     franqueado_name: string;
     unit_id: string;
+    group_code: number;
+    group_name: string;
+    cnpj: string;
   } | null>(null);
   
   // Estados para o sistema de sugestões de unidades antigas
@@ -223,7 +226,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     // Primeiro, buscar a unidade
     const { data: unidade, error: unidadeError } = await supabase
       .from('unidades')
-      .select('id, fantasy_name')
+      .select('id, fantasy_name, group_code, group_name, cnpj')
       .eq('cnpj', cnpj)
       .maybeSingle();
 
@@ -312,7 +315,10 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     const unitData = {
       fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
       franqueado_name: franqueadoName,
-      unit_id: unidade.id
+      unit_id: unidade.id,
+      group_code: unidade.group_code || 0,
+      group_name: unidade.group_name || '',
+      cnpj: unidade.cnpj || cnpj
     };
     
     console.log('🚨 Unidade já existe! Dados finais:', unitData);
@@ -326,16 +332,40 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
   const handleLinkExistingUnit = async () => {
     if (!existingUnitInfo?.unit_id) return;
     
+    console.log('🔗 Iniciando vinculação da unidade existente:', existingUnitInfo);
+    
+    // Antes de vincular, popular o formData com os dados completos da unidade
+    console.log('📝 Populando formData com dados da unidade existente...');
+    onUpdate({
+      group_code: existingUnitInfo.group_code,
+      group_name: existingUnitInfo.group_name,
+      fantasy_name: existingUnitInfo.fantasy_name,
+      cnpj: existingUnitInfo.cnpj
+    });
+    
+    console.log('✅ FormData atualizado com:', {
+      group_code: existingUnitInfo.group_code,
+      group_name: existingUnitInfo.group_name,
+      fantasy_name: existingUnitInfo.fantasy_name,
+      cnpj: existingUnitInfo.cnpj
+    });
+    
     setIsLinkingUnit(true);
     try {
+      console.log('🚀 Chamando linkExistingUnit...');
       const success = await linkExistingUnit(existingUnitInfo.unit_id);
+      console.log('📊 Resultado do linkExistingUnit:', success);
+      
       if (success) {
+        console.log('✅ Vinculação bem-sucedida!');
         setShowExistingUnitModal(false);
         setExistingUnitInfo(null);
         onNext(); // Advance to next step
+      } else {
+        console.error('❌ Falha na vinculação');
       }
     } catch (error) {
-      console.error('Error linking existing unit:', error);
+      console.error('❌ Erro durante vinculação:', error);
     } finally {
       setIsLinkingUnit(false);
     }
