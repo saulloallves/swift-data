@@ -242,7 +242,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     const { data: relacao, error: relacaoError } = await supabase
       .from('franqueados_unidades')
       .select(`
-        franqueados(
+        franqueados!fk_franqueados_unidades_franqueado_id(
           full_name
         )
       `)
