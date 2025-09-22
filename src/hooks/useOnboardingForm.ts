@@ -581,22 +581,54 @@ export const useOnboardingForm = () => {
       const franchiseeIdResult = franchiseeResult.data.id;
       setFranchiseeId(franchiseeIdResult);
 
-      // Create the relationship with existing unit
-      const relationshipResult = await supabase
+      // Check if unit is already linked to another franchisee
+      console.log('🔍 Verificando se a unidade já está vinculada...');
+      const { data: existingRelation } = await supabase
         .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: franchiseeIdResult, 
-          unidade_id: unitId 
-        });
+        .select('id, franqueado_id')
+        .eq('unidade_id', unitId)
+        .maybeSingle();
 
-      if (relationshipResult.error) {
-        console.error('Relationship creation error:', relationshipResult.error);
-        toast.error(`Erro ao vincular franqueado à unidade: ${relationshipResult.error.message}`);
-        return false;
+      console.log('📋 Relação existente encontrada:', existingRelation);
+
+      if (existingRelation) {
+        // Unit is already linked, transfer ownership
+        console.log('🔄 Transferindo propriedade da unidade...');
+        const { error: updateError } = await supabase
+          .from('franqueados_unidades')
+          .update({ 
+            franqueado_id: franchiseeIdResult,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRelation.id);
+
+        if (updateError) {
+          console.error('❌ Erro ao transferir propriedade:', updateError);
+          toast.error(`Erro ao transferir propriedade da unidade: ${updateError.message}`);
+          return false;
+        }
+
+        console.log('✅ Propriedade da unidade transferida com sucesso');
+        toast.success("Unidade vinculada com sucesso! Propriedade transferida.");
+      } else {
+        // Unit is not linked, create new relationship
+        console.log('➕ Criando nova relação...');
+        const { error: insertError } = await supabase
+          .from('franqueados_unidades')
+          .insert({ 
+            franqueado_id: franchiseeIdResult, 
+            unidade_id: unitId 
+          });
+
+        if (insertError) {
+          console.error('❌ Erro ao criar relação:', insertError);
+          toast.error(`Erro ao vincular franqueado à unidade: ${insertError.message}`);
+          return false;
+        }
+
+        console.log('✅ Nova relação criada com sucesso');
+        toast.success("Franqueado vinculado à unidade com sucesso!");
       }
-
-      console.log('✅ Franqueado vinculado à unidade existente com sucesso');
-      toast.success("Franqueado vinculado à unidade com sucesso!");
       return true;
 
     } catch (error) {
