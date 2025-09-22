@@ -238,30 +238,64 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
 
     console.log('✅ Unidade encontrada, buscando franqueado associado...');
     
-    // Se a unidade existe, buscar o franqueado associado
-    const { data: relacao, error: relacaoError } = await supabase
-      .from('franqueados_unidades')
-      .select(`
-        franqueados!fk_franqueados_unidades_franqueado_id(
-          full_name
-        )
-      `)
-      .eq('unidade_id', unidade.id)
-      .limit(1)
-      .maybeSingle();
+    let franqueadoName = 'Franqueado não encontrado';
+    
+    try {
+      // Primeiro, tentar a consulta simples com join
+      const { data: relacao, error: relacaoError } = await supabase
+        .from('franqueados_unidades')
+        .select(`
+          franqueados(
+            full_name
+          )
+        `)
+        .eq('unidade_id', unidade.id)
+        .limit(1)
+        .maybeSingle();
 
-    console.log('👤 Resultado da consulta franqueado:', { relacao, relacaoError });
+      console.log('👤 Resultado da consulta com join:', { relacao, relacaoError });
 
-    if (relacaoError) throw relacaoError;
+      if (!relacaoError && relacao?.franqueados) {
+        franqueadoName = (relacao.franqueados as any).full_name;
+      } else {
+        // Fallback: buscar em duas etapas
+        console.log('🔄 Tentando consulta de fallback...');
+        
+        const { data: relacaoFallback, error: relacaoFallbackError } = await supabase
+          .from('franqueados_unidades')
+          .select('franqueado_id')
+          .eq('unidade_id', unidade.id)
+          .limit(1)
+          .maybeSingle();
+
+        console.log('📋 Relação encontrada:', { relacaoFallback, relacaoFallbackError });
+
+        if (relacaoFallback?.franqueado_id) {
+          const { data: franqueado, error: franqueadoError } = await supabase
+            .from('franqueados')
+            .select('full_name')
+            .eq('id', relacaoFallback.franqueado_id)
+            .maybeSingle();
+
+          console.log('👤 Franqueado encontrado:', { franqueado, franqueadoError });
+
+          if (franqueado?.full_name) {
+            franqueadoName = franqueado.full_name;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar franqueado:', error);
+    }
 
     // Sempre retornar que existe se a unidade foi encontrada
     const unitData = {
       fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-      franqueado_name: (relacao?.franqueados as any)?.full_name || 'Franqueado não encontrado',
+      franqueado_name: franqueadoName,
       unit_id: unidade.id
     };
     
-    console.log('🚨 Unidade já existe! Dados:', unitData);
+    console.log('🚨 Unidade já existe! Dados finais:', unitData);
     
     return {
       exists: true,
