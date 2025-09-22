@@ -254,23 +254,21 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
 
     if (relacaoError) throw relacaoError;
 
-    if (relacao && relacao.franqueados) {
-      const unitData = {
-        fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-        franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado',
-        unit_id: unidade.id
-      };
-      
-      console.log('🚨 Unidade já existe! Dados:', unitData);
-      
-      return {
-        exists: true,
-        unitData
-      };
-    }
-
-    console.log('❌ Relação franqueado-unidade não encontrada');
-    return { exists: false };
+    // Sempre retornar que existe se a unidade foi encontrada
+    const unitData = {
+      fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
+      franqueado_name: relacao && relacao.franqueados ? 
+        (relacao.franqueados as any).full_name : 
+        null,
+      unit_id: unidade.id
+    };
+    
+    console.log('🚨 Unidade já existe! Dados:', unitData);
+    
+    return {
+      exists: true,
+      unitData
+    };
   };
 
   const handleLinkExistingUnit = async () => {
