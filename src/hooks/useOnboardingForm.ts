@@ -518,12 +518,103 @@ export const useOnboardingForm = () => {
     }
   };
 
+  const linkExistingUnit = async (unitId: string): Promise<boolean> => {
+    setIsSubmitting(true);
+    
+    try {
+      // Validações básicas
+      if (!formData.cpf_rnm || !formData.full_name) {
+        toast.error("CPF e nome completo são obrigatórios");
+        return false;
+      }
+
+      // Prepare franchisee data
+      const franchiseeData = {
+        cpf_rnm: formData.cpf_rnm,
+        full_name: formData.full_name,
+        birth_date: formData.birth_date || null,
+        email: formData.franchisee_email || null,
+        contact: formData.contact,
+        nationality: formData.nationality || null,
+        owner_type: formData.owner_type,
+        education: formData.education || null,
+        previous_profession: formData.previous_profession || null,
+        previous_salary_range: formData.previous_salary_range || null,
+        was_entrepreneur: formData.was_entrepreneur,
+        availability: formData.availability || null,
+        discovery_source: formData.discovery_source || null,
+        was_referred: formData.was_referred,
+        referrer_name: formData.referrer_name || null,
+        referrer_unit_code: formData.referrer_unit_code || null,
+        has_other_activities: formData.has_other_activities,
+        other_activities_description: formData.other_activities_description || null,
+        receives_prolabore: formData.receives_prolabore,
+        prolabore_value: formData.prolabore_value || null,
+        profile_image: formData.profile_image || null,
+        instagram: formData.instagram || null,
+        address: formData.franchisee_address || null,
+        number_address: formData.franchisee_number_address || null,
+        address_complement: formData.franchisee_address_complement || null,
+        neighborhood: formData.franchisee_neighborhood || null,
+        city: formData.franchisee_city || null,
+        state: formData.franchisee_state || null,
+        uf: formData.franchisee_uf || null,
+        postal_code: formData.franchisee_postal_code || null,
+        lgpd_term_accepted: true,
+        confidentiality_term_accepted: true,
+        system_term_accepted: true,
+      };
+
+      // Insert franchisee data
+      const franchiseeResult = await supabase
+        .from('franqueados')
+        .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
+        .select('id')
+        .single();
+
+      if (franchiseeResult.error) {
+        console.error('Franchisee upsert error:', franchiseeResult.error);
+        toast.error(`Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}`);
+        return false;
+      }
+
+      const franchiseeIdResult = franchiseeResult.data.id;
+      setFranchiseeId(franchiseeIdResult);
+
+      // Create the relationship with existing unit
+      const relationshipResult = await supabase
+        .from('franqueados_unidades')
+        .insert({ 
+          franqueado_id: franchiseeIdResult, 
+          unidade_id: unitId 
+        });
+
+      if (relationshipResult.error) {
+        console.error('Relationship creation error:', relationshipResult.error);
+        toast.error(`Erro ao vincular franqueado à unidade: ${relationshipResult.error.message}`);
+        return false;
+      }
+
+      console.log('✅ Franqueado vinculado à unidade existente com sucesso');
+      toast.success("Franqueado vinculado à unidade com sucesso!");
+      return true;
+
+    } catch (error) {
+      console.error('Link existing unit error:', error);
+      toast.error("Erro inesperado ao vincular unidade. Tente novamente.");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
     formData,
     updateFormData,
     submitForm,
     submitNewUnit,
     resetUnitData,
+    linkExistingUnit,
     isSubmitting,
     franchiseeId,
   };

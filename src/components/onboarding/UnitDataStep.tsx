@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,15 +62,18 @@ interface UnitDataStepProps {
   onUpdate: (updates: Partial<OnboardingFormData>) => void;
   onNext: () => void;
   onPrevious: () => void;
+  linkExistingUnit: (unitId: string) => Promise<boolean>;
 }
 
-export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataStepProps) => {
+export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingUnit }: UnitDataStepProps) => {
   const [isLoadingCnpj, setIsLoadingCnpj] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [showExistingUnitModal, setShowExistingUnitModal] = useState(false);
+  const [isLinkingUnit, setIsLinkingUnit] = useState(false);
   const [existingUnitInfo, setExistingUnitInfo] = useState<{
     fantasy_name: string;
     franqueado_name: string;
+    unit_id: string;
   } | null>(null);
   
   // Estados para o sistema de sugestões de unidades antigas
@@ -254,7 +257,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
     if (relacao && relacao.franqueados) {
       const unitData = {
         fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-        franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado'
+        franqueado_name: (relacao.franqueados as any).full_name || 'Nome não encontrado',
+        unit_id: unidade.id
       };
       
       console.log('🚨 Unidade já existe! Dados:', unitData);
@@ -267,6 +271,31 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
 
     console.log('❌ Relação franqueado-unidade não encontrada');
     return { exists: false };
+  };
+
+  const handleLinkExistingUnit = async () => {
+    if (!existingUnitInfo?.unit_id) return;
+    
+    setIsLinkingUnit(true);
+    try {
+      const success = await linkExistingUnit(existingUnitInfo.unit_id);
+      if (success) {
+        setShowExistingUnitModal(false);
+        setExistingUnitInfo(null);
+        onNext(); // Advance to next step
+      }
+    } catch (error) {
+      console.error('Error linking existing unit:', error);
+    } finally {
+      setIsLinkingUnit(false);
+    }
+  };
+
+  const handleRegisterNewUnit = () => {
+    setShowExistingUnitModal(false);
+    setExistingUnitInfo(null);
+    // Clear CNPJ field to allow new registration
+    onUpdate({ cnpj: '' });
   };
 
   const handleCnpjLookup = async (cnpj: string) => {
@@ -1017,23 +1046,24 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious }: UnitDataSte
                   A unidade <strong>{existingUnitInfo.fantasy_name}</strong> já foi cadastrada por{' '}
                   <strong>{existingUnitInfo.franqueado_name}</strong>.
                   <br /><br />
-                  Não é possível cadastrar a mesma unidade novamente.
+                  Você pode vincular esta unidade ao seu cadastro ou cadastrar uma nova unidade.
                 </>
               ) : (
                 'Esta unidade já foi cadastrada por outro franqueado.'
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => {
-              console.log('🔄 Fechando modal...');
-              setShowExistingUnitModal(false);
-              setExistingUnitInfo(null);
-              // Limpar o campo CNPJ
-              onUpdate({ cnpj: '' });
-            }}>
-              Entendi
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogAction 
+              onClick={handleLinkExistingUnit}
+              disabled={isLinkingUnit}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {isLinkingUnit ? 'Vinculando...' : 'Vincular esta unidade ao meu cadastro'}
             </AlertDialogAction>
+            <AlertDialogCancel onClick={handleRegisterNewUnit}>
+              Cadastrar uma unidade nova
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

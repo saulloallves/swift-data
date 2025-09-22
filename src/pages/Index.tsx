@@ -25,7 +25,7 @@ const Index = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
   const [searchParams] = useSearchParams();
-  const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, isSubmitting, franchiseeId } = useOnboardingForm();
+  const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, linkExistingUnit, isSubmitting, franchiseeId } = useOnboardingForm();
 
   // Check for saved state and URL parameters on component mount
   useEffect(() => {
@@ -114,6 +114,7 @@ const Index = () => {
             onUpdate={updateFormData}
             onNext={handleNext}
             onPrevious={isAddingNewUnit ? undefined : handlePrevious}
+            linkExistingUnit={linkExistingUnit}
           />
         );
       case "terms":
