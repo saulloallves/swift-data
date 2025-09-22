@@ -663,7 +663,50 @@ export type Database = {
           unidade_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_franqueados_unidades_franqueado_id"
+            columns: ["franqueado_id"]
+            isOneToOne: false
+            referencedRelation: "franqueados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_franqueados_unidades_franqueado_id"
+            columns: ["franqueado_id"]
+            isOneToOne: false
+            referencedRelation: "v_franqueados_unidades_detalhes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_franqueados_unidades_unidade_id"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franqueados_unidades_franqueado_id_fkey"
+            columns: ["franqueado_id"]
+            isOneToOne: false
+            referencedRelation: "franqueados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franqueados_unidades_franqueado_id_fkey"
+            columns: ["franqueado_id"]
+            isOneToOne: false
+            referencedRelation: "v_franqueados_unidades_detalhes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "franqueados_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permissoes: {
         Row: {
@@ -1006,6 +1049,135 @@ export type Database = {
         }
         Relationships: []
       }
+      unidades_old: {
+        Row: {
+          address: string | null
+          address_complement: string | null
+          ai_agent_id: string | null
+          city: string | null
+          cnpj: number | null
+          created_at: string | null
+          docs_folder_id: string | null
+          docs_folder_link: string | null
+          drive_folder_id: string | null
+          drive_folder_link: string | null
+          email: string | null
+          group_code: number | null
+          group_name: string | null
+          has_parking: string | null
+          has_partner_parking: string | null
+          id: string | null
+          instagram_profile: string | null
+          neighborhood: string | null
+          notion_page_id: string | null
+          number_address: string | null
+          operation_fri: string | null
+          operation_hol: string | null
+          operation_mon: string | null
+          operation_sat: string | null
+          operation_sun: string | null
+          operation_thu: string | null
+          operation_tue: string | null
+          operation_wed: string | null
+          parking_spots: string | null
+          partner_parking_address: string | null
+          phone: string | null
+          postal_code: string | null
+          purchases_active: Json | null
+          sales_active: Json | null
+          state: string | null
+          store_imp_phase: string | null
+          store_model: string | null
+          store_phase: string | null
+          uf: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          address_complement?: string | null
+          ai_agent_id?: string | null
+          city?: string | null
+          cnpj?: number | null
+          created_at?: string | null
+          docs_folder_id?: string | null
+          docs_folder_link?: string | null
+          drive_folder_id?: string | null
+          drive_folder_link?: string | null
+          email?: string | null
+          group_code?: number | null
+          group_name?: string | null
+          has_parking?: string | null
+          has_partner_parking?: string | null
+          id?: string | null
+          instagram_profile?: string | null
+          neighborhood?: string | null
+          notion_page_id?: string | null
+          number_address?: string | null
+          operation_fri?: string | null
+          operation_hol?: string | null
+          operation_mon?: string | null
+          operation_sat?: string | null
+          operation_sun?: string | null
+          operation_thu?: string | null
+          operation_tue?: string | null
+          operation_wed?: string | null
+          parking_spots?: string | null
+          partner_parking_address?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          purchases_active?: Json | null
+          sales_active?: Json | null
+          state?: string | null
+          store_imp_phase?: string | null
+          store_model?: string | null
+          store_phase?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          address_complement?: string | null
+          ai_agent_id?: string | null
+          city?: string | null
+          cnpj?: number | null
+          created_at?: string | null
+          docs_folder_id?: string | null
+          docs_folder_link?: string | null
+          drive_folder_id?: string | null
+          drive_folder_link?: string | null
+          email?: string | null
+          group_code?: number | null
+          group_name?: string | null
+          has_parking?: string | null
+          has_partner_parking?: string | null
+          id?: string | null
+          instagram_profile?: string | null
+          neighborhood?: string | null
+          notion_page_id?: string | null
+          number_address?: string | null
+          operation_fri?: string | null
+          operation_hol?: string | null
+          operation_mon?: string | null
+          operation_sat?: string | null
+          operation_sun?: string | null
+          operation_thu?: string | null
+          operation_tue?: string | null
+          operation_wed?: string | null
+          parking_spots?: string | null
+          partner_parking_address?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          purchases_active?: Json | null
+          sales_active?: Json | null
+          state?: string | null
+          store_imp_phase?: string | null
+          store_model?: string | null
+          store_phase?: string | null
+          uf?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1029,7 +1201,43 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_franqueados_unidades_detalhes: {
+        Row: {
+          address: string | null
+          availability: string | null
+          birth_date: string | null
+          confidentiality_term_accepted: boolean | null
+          contact: string | null
+          cpf_rnm: string | null
+          created_at: string | null
+          discovery_source: string | null
+          education: string | null
+          full_name: string | null
+          has_other_activities: boolean | null
+          id: string | null
+          is_in_contract: boolean | null
+          lgpd_term_accepted: boolean | null
+          nationality: string | null
+          other_activities_description: string | null
+          owner_type: string | null
+          previous_profession: string | null
+          previous_salary_range: string | null
+          profile_image: string | null
+          prolabore_value: number | null
+          receives_prolabore: boolean | null
+          referrer_name: string | null
+          referrer_unit_code: string | null
+          system_term_accepted: boolean | null
+          total_unidades: number | null
+          unidade_group_codes: number[] | null
+          unidade_group_names: string[] | null
+          unidade_ids: string[] | null
+          updated_at: string | null
+          was_entrepreneur: boolean | null
+          was_referred: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_access_sensitive_data: {

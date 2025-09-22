@@ -242,7 +242,6 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     const { data: relacao, error: relacaoError } = await supabase
       .from('franqueados_unidades')
       .select(`
-        franqueado_id,
         franqueados(
           full_name
         )
@@ -258,7 +257,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     // Sempre retornar que existe se a unidade foi encontrada
     const unitData = {
       fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-      franqueado_name: relacao?.franqueados?.full_name || 'Franqueado não encontrado',
+      franqueado_name: (relacao?.franqueados as any)?.full_name || 'Franqueado não encontrado',
       unit_id: unidade.id
     };
     
