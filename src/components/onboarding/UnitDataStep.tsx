@@ -1100,8 +1100,11 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
       )}
 
       {/* Modal de CNPJ já existente */}
-      <AlertDialog open={showExistingUnitModal} onOpenChange={setShowExistingUnitModal}>
-        <AlertDialogContent className="max-w-2xl w-full mx-4">
+      <AlertDialog open={showExistingUnitModal}>
+        <AlertDialogContent 
+          className="max-w-2xl w-full mx-4"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive">Unidade já cadastrada</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
