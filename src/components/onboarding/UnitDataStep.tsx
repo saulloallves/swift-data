@@ -332,43 +332,27 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
   const handleLinkExistingUnit = async () => {
     if (!existingUnitInfo?.unit_id) return;
     
-    console.log('🔗 Iniciando vinculação da unidade existente:', existingUnitInfo);
+    console.log('🔗 Marcando unidade existente para vinculação:', existingUnitInfo);
     
-    // Antes de vincular, popular o formData com os dados completos da unidade
+    // Popular o formData com os dados completos da unidade existente
     console.log('📝 Populando formData com dados da unidade existente...');
     onUpdate({
       group_code: existingUnitInfo.group_code,
       group_name: existingUnitInfo.group_name,
       fantasy_name: existingUnitInfo.fantasy_name,
-      cnpj: existingUnitInfo.cnpj
+      cnpj: existingUnitInfo.cnpj,
+      // Marcar que é uma vinculação de unidade existente
+      _linking_existing_unit: true,
+      _existing_unit_id: existingUnitInfo.unit_id
     });
     
-    console.log('✅ FormData atualizado com:', {
-      group_code: existingUnitInfo.group_code,
-      group_name: existingUnitInfo.group_name,
-      fantasy_name: existingUnitInfo.fantasy_name,
-      cnpj: existingUnitInfo.cnpj
-    });
+    console.log('✅ FormData atualizado - unidade marcada para vinculação posterior');
+    console.log('➡️ Avançando para próxima etapa...');
     
-    setIsLinkingUnit(true);
-    try {
-      console.log('🚀 Chamando linkExistingUnit...');
-      const success = await linkExistingUnit(existingUnitInfo.unit_id);
-      console.log('📊 Resultado do linkExistingUnit:', success);
-      
-      if (success) {
-        console.log('✅ Vinculação bem-sucedida!');
-        setShowExistingUnitModal(false);
-        setExistingUnitInfo(null);
-        onNext(); // Advance to next step
-      } else {
-        console.error('❌ Falha na vinculação');
-      }
-    } catch (error) {
-      console.error('❌ Erro durante vinculação:', error);
-    } finally {
-      setIsLinkingUnit(false);
-    }
+    // Fechar modal e avançar para próxima etapa
+    setShowExistingUnitModal(false);
+    setExistingUnitInfo(null);
+    onNext(); // Avançar para termos
   };
 
   const handleRegisterNewUnit = () => {

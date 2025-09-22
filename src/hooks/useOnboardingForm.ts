@@ -26,6 +26,10 @@ export interface OnboardingFormData {
   prolabore_value: number;
   profile_image: string;
   instagram: string;
+
+  // Flags para controle de fluxo
+  _linking_existing_unit?: boolean;
+  _existing_unit_id?: string;
   
   // Franchisee address data
   franchisee_postal_code: string;
@@ -106,6 +110,8 @@ const initialFormData: OnboardingFormData = {
   prolabore_value: 0,
   profile_image: "",
   instagram: "",
+  _linking_existing_unit: false,
+  _existing_unit_id: "",
   franchisee_postal_code: "",
   franchisee_address: "",
   franchisee_number_address: "",
@@ -214,6 +220,23 @@ export const useOnboardingForm = () => {
         return false;
       }
 
+      // Verificar se é vinculação de unidade existente
+      if (formData._linking_existing_unit && formData._existing_unit_id) {
+        console.log('🔗 Detectado fluxo de vinculação de unidade existente');
+        console.log('🎯 ID da unidade existente:', formData._existing_unit_id);
+        
+        // Chamar linkExistingUnit diretamente
+        const success = await linkExistingUnit(formData._existing_unit_id);
+        if (success) {
+          console.log('✅ Vinculação de unidade existente concluída com sucesso!');
+          return true;
+        } else {
+          console.error('❌ Falha na vinculação de unidade existente');
+          return false;
+        }
+      }
+
+      // Fluxo normal - validar código de unidade nova
       // VALIDAÇÃO CRÍTICA: Verificar se código de unidade existe na base de dados
       if (formData.group_code) {
         const { data: unitExists, error } = await supabase
