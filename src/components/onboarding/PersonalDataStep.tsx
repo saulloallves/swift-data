@@ -112,19 +112,21 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
   const checkPhoneInDatabase = async (phone: string) => {
     try {
       console.log('Querying database for phone:', phone);
-      const { data: existingFranqueado, error } = await supabase
+      const { data: existingFranqueados, error } = await supabase
         .from('franqueados')
         .select('full_name, created_at')
         .eq('contact', phone)
-        .single();
+        .order('created_at', { ascending: true })
+        .limit(1);
 
-      console.log('Database query result:', { data: existingFranqueado, error });
+      console.log('Database query result:', { data: existingFranqueados, error });
 
-      if (error && error.code !== 'PGRST116') {
-        console.log('Database error (not PGRST116):', error);
+      if (error) {
+        console.log('Database error:', error);
         throw error;
       }
 
+      const existingFranqueado = existingFranqueados?.[0];
       const result = {
         exists: !!existingFranqueado,
         data: existingFranqueado
