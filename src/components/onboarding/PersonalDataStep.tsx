@@ -7,10 +7,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, AlertTriangle } from "lucide-react";
 import { OnboardingFormData } from "@/hooks/useOnboardingForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatCpf, cleanCpf, formatPhoneNumber, cleanPhoneNumber, formatCurrency, cleanCurrency, formatCep, cleanCep } from "@/lib/utils";
 
 interface PersonalDataStepProps {
@@ -22,13 +23,54 @@ interface PersonalDataStepProps {
 export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepProps) => {
   const [isLoadingCpf, setIsLoadingCpf] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [cpfAlreadyExists, setCpfAlreadyExists] = useState(false);
+  const [existingCpfData, setExistingCpfData] = useState<{ full_name: string; created_at: string } | null>(null);
+  const [showCpfExistsModal, setShowCpfExistsModal] = useState(false);
+
+  const checkCpfInDatabase = async (cpf: string) => {
+    try {
+      const { data: existingFranqueado, error } = await supabase
+        .from('franqueados')
+        .select('full_name, created_at')
+        .eq('cpf_rnm', cpf)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return {
+        exists: !!existingFranqueado,
+        data: existingFranqueado
+      };
+    } catch (error) {
+      console.error('Error checking CPF in database:', error);
+      return { exists: false, data: null };
+    }
+  };
 
   const handleCpfLookup = async (cpf: string) => {
     const cleanedCpf = cleanCpf(cpf);
     if (cleanedCpf.length !== 11) return;
 
     setIsLoadingCpf(true);
+    
     try {
+      // Primeiro, verificar se o CPF já existe no banco
+      const { exists, data: existingData } = await checkCpfInDatabase(cleanedCpf);
+      
+      if (exists && existingData) {
+        setExistingCpfData({
+          full_name: existingData.full_name,
+          created_at: existingData.created_at
+        });
+        setCpfAlreadyExists(true);
+        setShowCpfExistsModal(true);
+        setIsLoadingCpf(false);
+        return;
+      }
+
+      // Se não existe no banco, continuar com a API externa
       const { data: result, error } = await supabase.functions.invoke('api-lookup', {
         body: { type: 'cpf', value: cleanedCpf }
       });
@@ -50,6 +92,17 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     } finally {
       setIsLoadingCpf(false);
     }
+  };
+
+  const handleClearCpfData = () => {
+    onUpdate({ 
+      cpf_rnm: "",
+      full_name: "",
+      birth_date: ""
+    });
+    setCpfAlreadyExists(false);
+    setExistingCpfData(null);
+    setShowCpfExistsModal(false);
   };
 
   const handleCepLookup = async (cep: string) => {
@@ -174,24 +227,24 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
         <div className="space-y-2">
           <Label htmlFor="full_name">Nome Completo *</Label>
-          <Input
-            id="full_name"
-            placeholder="Digite seu nome completo"
-            value={data.full_name}
-            onChange={(e) => onUpdate({ full_name: e.target.value })}
-            disabled={isLoadingCpf}
-          />
+            <Input
+              id="full_name"
+              placeholder="Digite seu nome completo"
+              value={data.full_name}
+              onChange={(e) => onUpdate({ full_name: e.target.value })}
+              disabled={isLoadingCpf || cpfAlreadyExists}
+            />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="birth_date">Data de Nascimento *</Label>
-          <Input
-            id="birth_date"
-            type="date"
-            value={data.birth_date}
-            onChange={(e) => onUpdate({ birth_date: e.target.value })}
-            disabled={isLoadingCpf}
-          />
+            <Input
+              id="birth_date"
+              type="date"
+              value={data.birth_date}
+              onChange={(e) => onUpdate({ birth_date: e.target.value })}
+              disabled={isLoadingCpf || cpfAlreadyExists}
+            />
         </div>
 
         <div className="space-y-2">
@@ -577,10 +630,46 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
       )}
 
       <div className="flex justify-end mt-8">
-        <Button onClick={handleSubmit} className="px-8">
+        <Button onClick={handleSubmit} className="px-8" disabled={cpfAlreadyExists}>
           Próximo
         </Button>
       </div>
+
+      {/* Modal de CPF já cadastrado */}
+      <AlertDialog open={showCpfExistsModal}>
+        <AlertDialogContent 
+          className="max-w-md w-full mx-4"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              CPF já cadastrado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm space-y-2">
+              <p>Este CPF já está cadastrado no sistema:</p>
+              {existingCpfData && (
+                <div className="bg-muted p-3 rounded-lg">
+                  <p><strong>Nome:</strong> {existingCpfData.full_name}</p>
+                  <p><strong>Cadastrado em:</strong> {new Date(existingCpfData.created_at).toLocaleDateString('pt-BR')}</p>
+                </div>
+              )}
+              <p className="text-muted-foreground">
+                Cada CPF pode ter apenas um cadastro. Por favor, utilize outro CPF ou entre em contato conosco se este for um erro.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleClearCpfData}
+              className="w-full"
+            >
+              Usar outro CPF
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </>
   );
