@@ -23,9 +23,13 @@ interface PersonalDataStepProps {
 export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepProps) => {
   const [isLoadingCpf, setIsLoadingCpf] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [isLoadingPhone, setIsLoadingPhone] = useState(false);
   const [cpfAlreadyExists, setCpfAlreadyExists] = useState(false);
   const [existingCpfData, setExistingCpfData] = useState<{ full_name: string; created_at: string } | null>(null);
   const [showCpfExistsModal, setShowCpfExistsModal] = useState(false);
+  const [phoneAlreadyExists, setPhoneAlreadyExists] = useState(false);
+  const [existingPhoneData, setExistingPhoneData] = useState<{ full_name: string; created_at: string } | null>(null);
+  const [showPhoneExistsModal, setShowPhoneExistsModal] = useState(false);
 
   const checkCpfInDatabase = async (cpf: string) => {
     try {
@@ -103,6 +107,61 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     setCpfAlreadyExists(false);
     setExistingCpfData(null);
     setShowCpfExistsModal(false);
+  };
+
+  const checkPhoneInDatabase = async (phone: string) => {
+    try {
+      const { data: existingFranqueado, error } = await supabase
+        .from('franqueados')
+        .select('full_name, created_at')
+        .eq('contact', phone)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return {
+        exists: !!existingFranqueado,
+        data: existingFranqueado
+      };
+    } catch (error) {
+      console.error('Error checking phone in database:', error);
+      return { exists: false, data: null };
+    }
+  };
+
+  const handlePhoneValidation = async (phone: string) => {
+    const cleanedPhone = cleanPhoneNumber(phone);
+    if (cleanedPhone.length < 10) return;
+
+    setIsLoadingPhone(true);
+    
+    try {
+      const { exists, data: existingData } = await checkPhoneInDatabase(cleanedPhone);
+      
+      if (exists && existingData) {
+        setExistingPhoneData({
+          full_name: existingData.full_name,
+          created_at: existingData.created_at
+        });
+        setPhoneAlreadyExists(true);
+        setShowPhoneExistsModal(true);
+        setIsLoadingPhone(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Phone validation error:', error);
+    } finally {
+      setIsLoadingPhone(false);
+    }
+  };
+
+  const handleClearPhoneData = () => {
+    onUpdate({ contact: "" });
+    setPhoneAlreadyExists(false);
+    setExistingPhoneData(null);
+    setShowPhoneExistsModal(false);
   };
 
   const handleCepLookup = async (cep: string) => {
@@ -232,7 +291,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               placeholder="Digite seu nome completo"
               value={data.full_name}
               onChange={(e) => onUpdate({ full_name: e.target.value })}
-              disabled={isLoadingCpf || cpfAlreadyExists}
+              disabled={isLoadingCpf || cpfAlreadyExists || phoneAlreadyExists}
             />
         </div>
 
@@ -243,7 +302,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               type="date"
               value={data.birth_date}
               onChange={(e) => onUpdate({ birth_date: e.target.value })}
-              disabled={isLoadingCpf || cpfAlreadyExists}
+              disabled={isLoadingCpf || cpfAlreadyExists || phoneAlreadyExists}
             />
         </div>
 
@@ -273,20 +332,28 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
         <div className="space-y-2">
           <Label htmlFor="contact">Telefone/Contato *</Label>
-          <Input
-            id="contact"
-            placeholder="(11) 99999-9999"
-            value={formatPhoneNumber(data.contact)}
-            onChange={(e) => {
-              const formatted = formatPhoneNumber(e.target.value);
-              onUpdate({ contact: formatted });
-            }}
-            onBlur={(e) => {
-              const cleaned = cleanPhoneNumber(e.target.value);
-              onUpdate({ contact: cleaned });
-            }}
-            maxLength={15}
-          />
+          <div className="relative">
+            <Input
+              id="contact"
+              placeholder="(11) 99999-9999"
+              value={formatPhoneNumber(data.contact)}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                onUpdate({ contact: formatted });
+              }}
+              onBlur={(e) => {
+                const cleaned = cleanPhoneNumber(e.target.value);
+                onUpdate({ contact: cleaned });
+                handlePhoneValidation(cleaned);
+              }}
+              maxLength={15}
+              className={isLoadingPhone ? "api-loading" : ""}
+              disabled={cpfAlreadyExists}
+            />
+            {isLoadingPhone && (
+              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -630,7 +697,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
       )}
 
       <div className="flex justify-end mt-8">
-        <Button onClick={handleSubmit} className="px-8" disabled={cpfAlreadyExists}>
+        <Button onClick={handleSubmit} className="px-8" disabled={cpfAlreadyExists || phoneAlreadyExists}>
           Próximo
         </Button>
       </div>
@@ -666,6 +733,38 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               className="w-full"
             >
               Usar outro CPF
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de Telefone já cadastrado */}
+      <AlertDialog open={showPhoneExistsModal}>
+        <AlertDialogContent 
+          className="max-w-md w-full mx-4"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Telefone já cadastrado
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm space-y-2">
+              <p>Esse telefone já foi cadastrado por: <strong>{existingPhoneData?.full_name}</strong>, favor realizar o seu cadastro com outro telefone.</p>
+              {existingPhoneData && (
+                <div className="bg-muted p-3 rounded-lg">
+                  <p><strong>Cadastrado em:</strong> {new Date(existingPhoneData.created_at).toLocaleDateString('pt-BR')}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleClearPhoneData}
+              className="w-full"
+            >
+              Usar outro telefone
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
