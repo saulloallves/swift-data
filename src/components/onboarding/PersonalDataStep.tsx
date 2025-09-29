@@ -111,20 +111,27 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
   const checkPhoneInDatabase = async (phone: string) => {
     try {
+      console.log('Querying database for phone:', phone);
       const { data: existingFranqueado, error } = await supabase
         .from('franqueados')
         .select('full_name, created_at')
         .eq('contact', phone)
         .single();
 
+      console.log('Database query result:', { data: existingFranqueado, error });
+
       if (error && error.code !== 'PGRST116') {
+        console.log('Database error (not PGRST116):', error);
         throw error;
       }
 
-      return {
+      const result = {
         exists: !!existingFranqueado,
         data: existingFranqueado
       };
+      
+      console.log('Final result:', result);
+      return result;
     } catch (error) {
       console.error('Error checking phone in database:', error);
       return { exists: false, data: null };
@@ -133,11 +140,17 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
   const handlePhoneValidation = async (phone: string) => {
     const cleanedPhone = cleanPhoneNumber(phone);
-    if (cleanedPhone.length < 10) return;
+    console.log('Phone validation triggered:', { original: phone, cleaned: cleanedPhone });
+    
+    if (cleanedPhone.length < 10) {
+      console.log('Phone too short, skipping validation');
+      return;
+    }
 
     setIsLoadingPhone(true);
     
     try {
+      console.log('Checking phone in database:', cleanedPhone);
       const { exists, data: existingData } = await checkPhoneInDatabase(cleanedPhone);
       
       if (exists && existingData) {
