@@ -144,8 +144,8 @@ const initialFormData: OnboardingFormData = {
   parking_spots: 0,
   has_partner_parking: false,
   partner_parking_address: "",
-  purchases_active: false,
-  sales_active: false,
+  purchases_active: true, // true por padrão pois store_phase inicial é "operacao"
+  sales_active: true, // true por padrão pois store_phase inicial é "operacao"
   operation_mon: "",
   operation_tue: "",
   operation_wed: "",
@@ -196,8 +196,8 @@ export const useOnboardingForm = () => {
       parking_spots: 0,
       has_partner_parking: false,
       partner_parking_address: "",
-      purchases_active: false,
-      sales_active: false,
+      purchases_active: true, // true por padrão pois store_phase inicial é "operacao"
+      sales_active: true, // true por padrão pois store_phase inicial é "operacao"
       // Reset operation hours
       operation_mon: "",
       operation_tue: "",
