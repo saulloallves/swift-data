@@ -241,7 +241,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
     // Outros campos obrigatórios
     if (!data.availability) errors.push("Disponibilidade");
-    if (!data.discovery_source) errors.push("Como conheceu a franquia");
+    if (!data.was_referred && !data.discovery_source) errors.push("Como conheceu a franquia");
 
     // Campos condicionais obrigatórios
     if (data.was_referred) {
@@ -581,7 +581,12 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           <Checkbox
             id="was_referred"
             checked={data.was_referred}
-            onCheckedChange={(checked) => onUpdate({ was_referred: checked as boolean })}
+            onCheckedChange={(checked) => {
+              onUpdate({ 
+                was_referred: checked as boolean,
+                discovery_source: checked ? "Indicação" : ""
+              });
+            }}
           />
           <Label htmlFor="was_referred">Foi indicado por alguém?</Label>
         </div>
@@ -644,21 +649,22 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="discovery_source">Como conheceu a franquia? *</Label>
-          <Select value={data.discovery_source} onValueChange={(value) => onUpdate({ discovery_source: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Internet">Internet</SelectItem>
-              <SelectItem value="Indicação">Indicação</SelectItem>
-              <SelectItem value="Feira de Franquias">Feira de Franquias</SelectItem>
-              <SelectItem value="Redes Sociais">Redes Sociais</SelectItem>
-              <SelectItem value="Outros">Outros</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {!data.was_referred && (
+          <div className="space-y-2">
+            <Label htmlFor="discovery_source">Como conheceu a franquia? *</Label>
+            <Select value={data.discovery_source} onValueChange={(value) => onUpdate({ discovery_source: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Internet">Internet</SelectItem>
+                <SelectItem value="Feira de Franquias">Feira de Franquias</SelectItem>
+                <SelectItem value="Redes Sociais">Redes Sociais</SelectItem>
+                <SelectItem value="Outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex items-center space-x-2">
           <Checkbox
