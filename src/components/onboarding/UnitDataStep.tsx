@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Loader2 } from "lucide-react";
@@ -663,8 +664,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store_phase">Fase da Loja *</Label>
-                <Select
+                <Label>Fase da Loja *</Label>
+                <RadioGroup 
                   value={data.store_phase}
                   onValueChange={(value) => {
                     onUpdate({ store_phase: value });
@@ -673,15 +674,17 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                       onUpdate({ store_imp_phase: "" });
                     }
                   }}
+                  className="flex flex-row gap-6"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a fase da loja" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="operacao">Operação</SelectItem>
-                    <SelectItem value="implantacao">Implantação</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="operacao" id="store_operacao" />
+                    <Label htmlFor="store_operacao" className="font-normal cursor-pointer">Operação</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="implantacao" id="store_implantacao" />
+                    <Label htmlFor="store_implantacao" className="font-normal cursor-pointer">Implantação</Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               {data.store_phase === "implantacao" && (
