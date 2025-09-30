@@ -637,10 +637,9 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               <SelectValue placeholder="Selecione sua disponibilidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Período Integral">Período Integral</SelectItem>
-              <SelectItem value="Meio Período">Meio Período</SelectItem>
-              <SelectItem value="Fins de Semana">Fins de Semana</SelectItem>
-              <SelectItem value="Flexível">Flexível</SelectItem>
+              <SelectItem value="Integral">Integral</SelectItem>
+              <SelectItem value="Parcial">Parcial</SelectItem>
+              <SelectItem value="Apoio em Eventos">Apoio em Eventos</SelectItem>
             </SelectContent>
           </Select>
         </div>
