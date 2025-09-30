@@ -589,7 +589,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         {data.was_referred && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="referrer_name">Nome do Indicador *</Label>
+              <Label htmlFor="referrer_name">Nome da Pessoa *</Label>
               <Input
                 id="referrer_name"
                 placeholder="Nome completo"
@@ -598,10 +598,10 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="referrer_unit_code">Código da Unidade do Indicador *</Label>
+              <Label htmlFor="referrer_unit_code">Nome da Unidade ou Código *</Label>
               <Input
                 id="referrer_unit_code"
-                placeholder="Código da unidade"
+                placeholder="Nome ou código da unidade"
                 value={data.referrer_unit_code}
                 onChange={(e) => onUpdate({ referrer_unit_code: e.target.value })}
               />
