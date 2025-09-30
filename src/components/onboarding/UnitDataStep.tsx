@@ -846,7 +846,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                 <Input
                   id="email"
                   type="email"
-                  placeholder="email@unidade.com"
+                  placeholder="e-mail da unidade"
                   value={data.email}
                   onChange={(e) => onUpdate({ email: e.target.value })}
                 />

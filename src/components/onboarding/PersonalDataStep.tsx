@@ -339,7 +339,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
           <Input
             id="franchisee_email"
             type="email"
-            placeholder="seu@email.com"
+            placeholder="e-mail pessoal"
             value={data.franchisee_email}
             onChange={(e) => onUpdate({ franchisee_email: e.target.value })}
           />
