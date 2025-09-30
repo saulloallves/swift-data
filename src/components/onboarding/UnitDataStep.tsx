@@ -968,8 +968,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_mon || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_mon: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_mon: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -982,8 +982,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_tue || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_tue: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_tue: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -996,8 +996,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_wed || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_wed: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_wed: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -1010,8 +1010,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_thu || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_thu: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_thu: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -1024,8 +1024,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_fri || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_fri: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_fri: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -1038,8 +1038,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00"
                   value={formatOperatingHours(data.operation_sat || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHours(e.target.value);
-                    onUpdate({ operation_sat: cleanedValue });
+                    const formattedValue = formatOperatingHours(e.target.value);
+                    onUpdate({ operation_sat: formattedValue });
                   }}
                   maxLength={11}
                 />
@@ -1052,8 +1052,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00 ou Fechado"
                   value={formatOperatingHoursWithText(data.operation_sun || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHoursWithText(e.target.value);
-                    onUpdate({ operation_sun: cleanedValue });
+                    const formattedValue = formatOperatingHoursWithText(e.target.value);
+                    onUpdate({ operation_sun: formattedValue });
                   }}
                 />
               </div>
@@ -1065,8 +1065,8 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="08:00-18:00 ou Fechado"
                   value={formatOperatingHoursWithText(data.operation_hol || "")}
                   onChange={(e) => {
-                    const cleanedValue = cleanOperatingHoursWithText(e.target.value);
-                    onUpdate({ operation_hol: cleanedValue });
+                    const formattedValue = formatOperatingHoursWithText(e.target.value);
+                    onUpdate({ operation_hol: formattedValue });
                   }}
                 />
               </div>
