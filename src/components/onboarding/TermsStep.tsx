@@ -71,12 +71,12 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
         </div>
 
         <Card className="border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-3">
-              <FileText className="h-5 w-5 text-primary mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <FileText className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground">Termo de Uso do Sistema</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Aceito os termos de uso da plataforma e sistema de gestão da franquia
@@ -95,6 +95,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                     id="system_term"
                     checked={data.system_term_accepted}
                     onCheckedChange={(checked) => onUpdate({ system_term_accepted: checked as boolean })}
+                    className="flex-shrink-0 mt-1"
                   />
                 </div>
               </div>
@@ -103,12 +104,12 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
         </Card>
 
         <Card className="border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-primary mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground">Termo de Confidencialidade</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Comprometo-me a manter sigilo sobre informações confidenciais da franquia
@@ -127,6 +128,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                     id="confidentiality_term"
                     checked={data.confidentiality_term_accepted}
                     onCheckedChange={(checked) => onUpdate({ confidentiality_term_accepted: checked as boolean })}
+                    className="flex-shrink-0 mt-1"
                   />
                 </div>
               </div>
@@ -135,12 +137,12 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
         </Card>
 
         <Card className="border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-3">
-              <UserCheck className="h-5 w-5 text-primary mt-1" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <UserCheck className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-foreground">Termo LGPD</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Autorizo o tratamento dos meus dados pessoais conforme a Lei Geral de Proteção de Dados
@@ -159,6 +161,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                     id="lgpd_term"
                     checked={data.lgpd_term_accepted}
                     onCheckedChange={(checked) => onUpdate({ lgpd_term_accepted: checked as boolean })}
+                    className="flex-shrink-0 mt-1"
                   />
                 </div>
               </div>
