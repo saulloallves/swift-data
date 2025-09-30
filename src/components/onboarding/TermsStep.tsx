@@ -88,7 +88,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                       onClick={() => handleTermClick("system")}
                     >
                       <ExternalLink className="h-3 w-3 mr-1" />
-                      Clique para ler o termo completo
+                      Ler termo completo
                     </Button>
                   </div>
                   <Checkbox
@@ -121,7 +121,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                       onClick={() => handleTermClick("confidentiality")}
                     >
                       <ExternalLink className="h-3 w-3 mr-1" />
-                      Clique para ler o termo completo
+                      Ler termo completo
                     </Button>
                   </div>
                   <Checkbox
@@ -154,7 +154,7 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
                       onClick={() => handleTermClick("lgpd")}
                     >
                       <ExternalLink className="h-3 w-3 mr-1" />
-                      Clique para ler o termo completo
+                      Ler termo completo
                     </Button>
                   </div>
                   <Checkbox
