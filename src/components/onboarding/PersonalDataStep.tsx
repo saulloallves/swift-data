@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
@@ -372,16 +373,21 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="owner_type">Tipo de Proprietário *</Label>
-          <Select value={data.owner_type} onValueChange={(value) => onUpdate({ owner_type: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Principal">Principal</SelectItem>
-              <SelectItem value="Sócio">Sócio</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>Tipo de Proprietário *</Label>
+          <RadioGroup 
+            value={data.owner_type} 
+            onValueChange={(value) => onUpdate({ owner_type: value })}
+            className="flex flex-row gap-6"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Principal" id="owner_principal" />
+              <Label htmlFor="owner_principal" className="font-normal cursor-pointer">Principal</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Sócio" id="owner_socio" />
+              <Label htmlFor="owner_socio" className="font-normal cursor-pointer">Sócio</Label>
+            </div>
+          </RadioGroup>
         </div>
 
         <div className="space-y-2">
