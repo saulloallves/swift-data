@@ -668,10 +668,21 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                 <RadioGroup 
                   value={data.store_phase}
                   onValueChange={(value) => {
-                    onUpdate({ store_phase: value });
-                    // Reset store_imp_phase when changing store_phase
+                    // Definir vendas e compras baseado na fase
                     if (value === "operacao") {
-                      onUpdate({ store_imp_phase: "" });
+                      onUpdate({ 
+                        store_phase: value,
+                        store_imp_phase: "",
+                        sales_active: true,
+                        purchases_active: true
+                      });
+                    } else {
+                      // Se for implantação, aguardar seleção da subfase
+                      onUpdate({ 
+                        store_phase: value,
+                        sales_active: false,
+                        purchases_active: false
+                      });
                     }
                   }}
                   className="flex flex-row gap-6"
@@ -692,7 +703,25 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   <Label htmlFor="store_imp_phase">Fase de Implantação *</Label>
                   <Select
                     value={data.store_imp_phase}
-                    onValueChange={(value) => onUpdate({ store_imp_phase: value })}
+                    onValueChange={(value) => {
+                      // Definir vendas e compras baseado na fase de implantação
+                      const semComprasVendas = ["integracao", "treinamento", "procura de ponto", "estruturacao"];
+                      const comprandoSemVendas = ["compras", "inauguracao"];
+                      
+                      if (semComprasVendas.includes(value)) {
+                        onUpdate({ 
+                          store_imp_phase: value,
+                          sales_active: false,
+                          purchases_active: false
+                        });
+                      } else if (comprandoSemVendas.includes(value)) {
+                        onUpdate({ 
+                          store_imp_phase: value,
+                          sales_active: false,
+                          purchases_active: true
+                        });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a fase de implementação" />
@@ -925,28 +954,6 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   />
                 </div>
               )}
-
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="purchases_active"
-                    checked={data.purchases_active}
-                    onCheckedChange={(checked) => onUpdate({ purchases_active: checked as boolean })}
-                  />
-                  <Label htmlFor="purchases_active">Compras ativas</Label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="sales_active"
-                    checked={data.sales_active}
-                    onCheckedChange={(checked) => onUpdate({ sales_active: checked as boolean })}
-                  />
-                  <Label htmlFor="sales_active">Vendas ativas</Label>
-                </div>
-              </div>
             </div>
           </div>
 
