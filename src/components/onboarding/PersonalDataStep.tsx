@@ -19,14 +19,15 @@ interface PersonalDataStepProps {
   data: OnboardingFormData;
   onUpdate: (updates: Partial<OnboardingFormData>) => void;
   onNext: () => void;
+  onStartNewUnitFlow?: (franchiseeId: string) => void;
 }
 
-export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepProps) => {
+export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }: PersonalDataStepProps) => {
   const [isLoadingCpf, setIsLoadingCpf] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [isLoadingPhone, setIsLoadingPhone] = useState(false);
   const [cpfAlreadyExists, setCpfAlreadyExists] = useState(false);
-  const [existingCpfData, setExistingCpfData] = useState<{ full_name: string; created_at: string } | null>(null);
+  const [existingCpfData, setExistingCpfData] = useState<{ full_name: string; created_at: string; id?: string } | null>(null);
   const [showCpfExistsModal, setShowCpfExistsModal] = useState(false);
   const [phoneAlreadyExists, setPhoneAlreadyExists] = useState(false);
   const [existingPhoneData, setExistingPhoneData] = useState<{ full_name: string; created_at: string } | null>(null);
@@ -36,7 +37,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     try {
       const { data: existingFranqueado, error } = await supabase
         .from('franqueados')
-        .select('full_name, created_at')
+        .select('id, full_name, created_at')
         .eq('cpf_rnm', cpf)
         .single();
 
@@ -46,11 +47,12 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
 
       return {
         exists: !!existingFranqueado,
-        data: existingFranqueado
+        data: existingFranqueado,
+        franchiseeId: existingFranqueado?.id || null
       };
     } catch (error) {
       console.error('Error checking CPF in database:', error);
-      return { exists: false, data: null };
+      return { exists: false, data: null, franchiseeId: null };
     }
   };
 
@@ -62,12 +64,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
     
     try {
       // Primeiro, verificar se o CPF já existe no banco
-      const { exists, data: existingData } = await checkCpfInDatabase(cleanedCpf);
+      const { exists, data: existingData, franchiseeId } = await checkCpfInDatabase(cleanedCpf);
       
       if (exists && existingData) {
         setExistingCpfData({
           full_name: existingData.full_name,
-          created_at: existingData.created_at
+          created_at: existingData.created_at,
+          id: franchiseeId
         });
         setCpfAlreadyExists(true);
         setShowCpfExistsModal(true);
@@ -748,15 +751,26 @@ export const PersonalDataStep = ({ data, onUpdate, onNext }: PersonalDataStepPro
                 </div>
               )}
               <p className="text-muted-foreground">
-                Cada CPF pode ter apenas um cadastro. Por favor, utilize outro CPF ou entre em contato conosco se este for um erro.
+                Você pode cadastrar uma nova unidade para este franqueado ou utilizar outro CPF.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            {existingCpfData?.id && onStartNewUnitFlow && (
+              <Button
+                onClick={() => {
+                  setShowCpfExistsModal(false);
+                  onStartNewUnitFlow(existingCpfData.id!);
+                }}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90"
+              >
+                Cadastrar Nova Unidade
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={handleClearCpfData}
-              className="w-full"
+              className="w-full sm:w-auto"
             >
               Usar outro CPF
             </Button>

@@ -24,8 +24,19 @@ const steps: Array<{ key: OnboardingStep; title: string; description: string }> 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("welcome");
   const [isAddingNewUnit, setIsAddingNewUnit] = useState(false);
+  const [isNewUnitForExistingFranchisee, setIsNewUnitForExistingFranchisee] = useState(false);
   const [searchParams] = useSearchParams();
-  const { formData, updateFormData, submitForm, submitNewUnit, resetUnitData, linkExistingUnit, isSubmitting, franchiseeId } = useOnboardingForm();
+  const { 
+    formData, 
+    updateFormData, 
+    submitForm, 
+    submitNewUnit, 
+    resetUnitData, 
+    linkExistingUnit, 
+    isSubmitting, 
+    franchiseeId,
+    setExistingFranchisee 
+  } = useOnboardingForm();
 
   // Check for saved state and URL parameters on component mount
   useEffect(() => {
@@ -79,11 +90,14 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
-    const success = isAddingNewUnit ? await submitNewUnit() : await submitForm();
+    const success = isAddingNewUnit || isNewUnitForExistingFranchisee ? await submitNewUnit() : await submitForm();
     if (success) {
       if (isAddingNewUnit) {
         // Reset state after successful new unit registration
         setIsAddingNewUnit(false);
+      }
+      if (isNewUnitForExistingFranchisee) {
+        setIsNewUnitForExistingFranchisee(false);
       }
       setCurrentStep("success");
     }
@@ -92,6 +106,12 @@ const Index = () => {
   const handleAddNewUnit = () => {
     resetUnitData();
     setIsAddingNewUnit(true);
+    setCurrentStep("unit");
+  };
+
+  const handleStartNewUnitFlow = (existingFranchiseeId: string) => {
+    setExistingFranchisee(existingFranchiseeId);
+    setIsNewUnitForExistingFranchisee(true);
     setCurrentStep("unit");
   };
 
@@ -105,6 +125,7 @@ const Index = () => {
             data={formData}
             onUpdate={updateFormData}
             onNext={handleNext}
+            onStartNewUnitFlow={handleStartNewUnitFlow}
           />
         );
       case "unit":
@@ -113,8 +134,9 @@ const Index = () => {
             data={formData}
             onUpdate={updateFormData}
             onNext={handleNext}
-            onPrevious={isAddingNewUnit ? undefined : handlePrevious}
+            onPrevious={isNewUnitForExistingFranchisee ? undefined : (isAddingNewUnit ? undefined : handlePrevious)}
             linkExistingUnit={linkExistingUnit}
+            isNewUnitFlow={isNewUnitForExistingFranchisee}
           />
         );
       case "terms":

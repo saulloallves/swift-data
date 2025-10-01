@@ -62,11 +62,12 @@ interface UnitDataStepProps {
   data: OnboardingFormData;
   onUpdate: (updates: Partial<OnboardingFormData>) => void;
   onNext: () => void;
-  onPrevious: () => void;
+  onPrevious?: () => void;
   linkExistingUnit: (unitId: string) => Promise<boolean>;
+  isNewUnitFlow?: boolean;
 }
 
-export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingUnit }: UnitDataStepProps) => {
+export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingUnit, isNewUnitFlow }: UnitDataStepProps) => {
   const [isLoadingCnpj, setIsLoadingCnpj] = useState(false);
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [showExistingUnitModal, setShowExistingUnitModal] = useState(false);
@@ -526,6 +527,13 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
 
   return (
     <>
+      {isNewUnitFlow && (
+        <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+          <p className="text-sm text-primary font-medium">
+            📋 Cadastrando nova unidade para franqueado existente
+          </p>
+        </div>
+      )}
       <div className="form-section">
         <div className="space-y-8">
           {/* Dados Básicos da Unidade */}
@@ -1075,10 +1083,12 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
         </div>
 
         <div className="flex justify-between mt-8">
-          <Button onClick={onPrevious} variant="outline">
-            Anterior
-          </Button>
-          <Button onClick={handleSubmit}>
+          {onPrevious && (
+            <Button onClick={onPrevious} variant="outline">
+              Anterior
+            </Button>
+          )}
+          <Button onClick={handleSubmit} className={!onPrevious ? "ml-auto" : ""}>
             Próximo
           </Button>
         </div>

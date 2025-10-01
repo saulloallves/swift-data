@@ -163,6 +163,7 @@ export const useOnboardingForm = () => {
   const [formData, setFormData] = useState<OnboardingFormData>(initialFormData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [franchiseeId, setFranchiseeId] = useState<string | null>(null);
+  const [existingFranchiseeId, setExistingFranchiseeId] = useState<string | null>(null);
 
   const updateFormData = (updates: Partial<OnboardingFormData> | OnboardingFormData) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -208,6 +209,11 @@ export const useOnboardingForm = () => {
       operation_sun: "",
       operation_hol: "",
     }));
+  };
+
+  const setExistingFranchisee = (franchiseeId: string) => {
+    setExistingFranchiseeId(franchiseeId);
+    setFranchiseeId(franchiseeId);
   };
 
   const submitForm = async (): Promise<boolean> => {
@@ -656,5 +662,6 @@ export const useOnboardingForm = () => {
     linkExistingUnit,
     isSubmitting,
     franchiseeId,
+    setExistingFranchisee
   };
 };
