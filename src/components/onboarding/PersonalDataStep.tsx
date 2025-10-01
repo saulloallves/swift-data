@@ -32,6 +32,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
   const [phoneAlreadyExists, setPhoneAlreadyExists] = useState(false);
   const [existingPhoneData, setExistingPhoneData] = useState<{ full_name: string; created_at: string } | null>(null);
   const [showPhoneExistsModal, setShowPhoneExistsModal] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   const checkCpfInDatabase = async (cpf: string) => {
     try {
@@ -262,11 +263,14 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
     }
 
     if (errors.length > 0) {
+      setInvalidFields(errors);
       toast.error(`⚠️ ATENÇÃO: Preencha todos os campos obrigatórios: ${errors.join(", ")}`, {
         duration: 6000,
       });
       return;
     }
+    
+    setInvalidFields([]);
 
     // Atualiza o CPF e CEP limpos antes de continuar
     onUpdate({ 
@@ -297,7 +301,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 handleCpfLookup(cleaned);
               }}
               maxLength={14}
-              className={isLoadingCpf ? "api-loading" : ""}
+              className={`${isLoadingCpf ? "api-loading" : ""} ${invalidFields.includes("CPF") ? "border-destructive border-2" : ""}`}
             />
             {isLoadingCpf && (
               <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
@@ -313,6 +317,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.full_name}
               onChange={(e) => onUpdate({ full_name: e.target.value })}
               disabled={isLoadingCpf || cpfAlreadyExists || phoneAlreadyExists}
+              className={invalidFields.includes("Nome Completo") ? "border-destructive border-2" : ""}
             />
         </div>
 
@@ -324,13 +329,14 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.birth_date}
               onChange={(e) => onUpdate({ birth_date: e.target.value })}
               disabled={isLoadingCpf || cpfAlreadyExists || phoneAlreadyExists}
+              className={invalidFields.includes("Data de Nascimento") ? "border-destructive border-2" : ""}
             />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="nationality">Nacionalidade *</Label>
           <Select value={data.nationality} onValueChange={(value) => onUpdate({ nationality: value })}>
-            <SelectTrigger>
+            <SelectTrigger className={invalidFields.includes("Nacionalidade") ? "border-destructive border-2" : ""}>
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
@@ -348,6 +354,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
             placeholder="e-mail pessoal"
             value={data.franchisee_email}
             onChange={(e) => onUpdate({ franchisee_email: e.target.value })}
+            className={invalidFields.includes("E-mail") ? "border-destructive border-2" : ""}
           />
         </div>
 
@@ -368,7 +375,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 handlePhoneValidation(cleaned);
               }}
               maxLength={15}
-              className={isLoadingPhone ? "api-loading" : ""}
+              className={`${isLoadingPhone ? "api-loading" : ""} ${invalidFields.includes("Telefone/Contato") ? "border-destructive border-2" : ""}`}
               disabled={cpfAlreadyExists}
             />
             {isLoadingPhone && (
@@ -379,26 +386,21 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
 
         <div className="space-y-2">
           <Label>Tipo de Proprietário *</Label>
-          <RadioGroup 
-            value={data.owner_type} 
-            onValueChange={(value) => onUpdate({ owner_type: value })}
-            className="flex flex-row gap-6"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Principal" id="owner_principal" />
-              <Label htmlFor="owner_principal" className="font-normal cursor-pointer">Principal</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Sócio" id="owner_socio" />
-              <Label htmlFor="owner_socio" className="font-normal cursor-pointer">Sócio</Label>
-            </div>
-          </RadioGroup>
+          <Select value={data.owner_type} onValueChange={(value) => onUpdate({ owner_type: value })}>
+            <SelectTrigger className={invalidFields.includes("Tipo de Proprietário") ? "border-destructive border-2" : ""}>
+              <SelectValue placeholder="Selecione..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Principal">Principal</SelectItem>
+              <SelectItem value="Sócio">Sócio</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="education">Escolaridade *</Label>
           <Select value={data.education} onValueChange={(value) => onUpdate({ education: value })}>
-            <SelectTrigger>
+            <SelectTrigger className={invalidFields.includes("Escolaridade") ? "border-destructive border-2" : ""}>
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
@@ -419,13 +421,14 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
             placeholder="Sua profissão anterior"
             value={data.previous_profession}
             onChange={(e) => onUpdate({ previous_profession: e.target.value })}
+            className={invalidFields.includes("Profissão Anterior") ? "border-destructive border-2" : ""}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="previous_salary_range">Faixa Salarial Anterior *</Label>
           <Select value={data.previous_salary_range} onValueChange={(value) => onUpdate({ previous_salary_range: value })}>
-            <SelectTrigger>
+            <SelectTrigger className={invalidFields.includes("Faixa Salarial Anterior") ? "border-destructive border-2" : ""}>
               <SelectValue placeholder="Selecione..." />
             </SelectTrigger>
             <SelectContent>
@@ -445,6 +448,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
             placeholder="@seuusuario"
             value={data.instagram}
             onChange={(e) => onUpdate({ instagram: e.target.value })}
+            className={invalidFields.includes("Instagram Pessoal") ? "border-destructive border-2" : ""}
           />
         </div>
 
@@ -474,7 +478,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 }}
                 onBlur={(e) => handleCepLookup(e.target.value)}
                 maxLength={9}
-                className={isLoadingCep ? "api-loading" : ""}
+                className={`${isLoadingCep ? "api-loading" : ""} ${invalidFields.includes("CEP") ? "border-destructive border-2" : ""}`}
               />
               {isLoadingCep && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
@@ -490,6 +494,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.franchisee_address}
               onChange={(e) => onUpdate({ franchisee_address: e.target.value })}
               disabled={isLoadingCep}
+              className={invalidFields.includes("Logradouro") ? "border-destructive border-2" : ""}
             />
           </div>
 
@@ -500,6 +505,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               placeholder="123"
               value={data.franchisee_number_address}
               onChange={(e) => onUpdate({ franchisee_number_address: e.target.value })}
+              className={invalidFields.includes("Número") ? "border-destructive border-2" : ""}
             />
           </div>
 
@@ -526,6 +532,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                   placeholder="Apto, Sala, etc."
                   value={data.franchisee_address_complement}
                   onChange={(e) => onUpdate({ franchisee_address_complement: e.target.value })}
+                  className={invalidFields.includes("Complemento") ? "border-destructive border-2" : ""}
                 />
               </div>
             )}
@@ -539,6 +546,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.franchisee_neighborhood}
               onChange={(e) => onUpdate({ franchisee_neighborhood: e.target.value })}
               disabled={isLoadingCep}
+              className={invalidFields.includes("Bairro") ? "border-destructive border-2" : ""}
             />
           </div>
 
@@ -550,6 +558,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.franchisee_city}
               onChange={(e) => onUpdate({ franchisee_city: e.target.value })}
               disabled={isLoadingCep}
+              className={invalidFields.includes("Cidade") ? "border-destructive border-2" : ""}
             />
           </div>
 
@@ -561,6 +570,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               value={data.franchisee_state}
               onChange={(e) => onUpdate({ franchisee_state: e.target.value })}
               disabled={isLoadingCep}
+              className={invalidFields.includes("Estado") ? "border-destructive border-2" : ""}
             />
           </div>
 
@@ -573,6 +583,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               onChange={(e) => onUpdate({ franchisee_uf: e.target.value })}
               disabled={isLoadingCep}
               maxLength={2}
+              className={invalidFields.includes("UF") ? "border-destructive border-2" : ""}
             />
           </div>
         </div>
@@ -611,6 +622,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 placeholder="Nome completo"
                 value={data.referrer_name}
                 onChange={(e) => onUpdate({ referrer_name: e.target.value })}
+                className={invalidFields.includes("Nome do Indicador") ? "border-destructive border-2" : ""}
               />
             </div>
             <div className="space-y-2">
@@ -620,6 +632,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 placeholder="Nome ou código da unidade"
                 value={data.referrer_unit_code}
                 onChange={(e) => onUpdate({ referrer_unit_code: e.target.value })}
+                className={invalidFields.includes("Código da Unidade do Indicador") ? "border-destructive border-2" : ""}
               />
             </div>
           </div>
@@ -642,6 +655,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
               placeholder="Descreva suas outras atividades profissionais"
               value={data.other_activities_description}
               onChange={(e) => onUpdate({ other_activities_description: e.target.value })}
+              className={invalidFields.includes("Descrição das outras atividades") ? "border-destructive border-2" : ""}
             />
           </div>
         )}
@@ -649,7 +663,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         <div className="space-y-2">
           <Label htmlFor="availability">Disponibilidade *</Label>
           <Select value={data.availability} onValueChange={(value) => onUpdate({ availability: value })}>
-            <SelectTrigger>
+            <SelectTrigger className={invalidFields.includes("Disponibilidade") ? "border-destructive border-2" : ""}>
               <SelectValue placeholder="Selecione sua disponibilidade" />
             </SelectTrigger>
             <SelectContent>
@@ -664,7 +678,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
           <div className="space-y-2">
             <Label htmlFor="discovery_source">Como conheceu a franquia? *</Label>
             <Select value={data.discovery_source} onValueChange={(value) => onUpdate({ discovery_source: value })}>
-              <SelectTrigger>
+              <SelectTrigger className={invalidFields.includes("Como conheceu a franquia") ? "border-destructive border-2" : ""}>
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -697,6 +711,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 const cleanValue = cleanCurrency(e.target.value);
                 onUpdate({ prolabore_value: cleanValue });
               }}
+              className={invalidFields.includes("Valor do Pró-labore") ? "border-destructive border-2" : ""}
             />
           </div>
         )}

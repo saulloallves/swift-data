@@ -93,6 +93,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
   const [isValidUnitSelected, setIsValidUnitSelected] = useState(false);
   const [selectedUnitCode, setSelectedUnitCode] = useState<number | null>(null);
   const [isCacheLoaded, setIsCacheLoaded] = useState(false);
+  const [invalidFields, setInvalidFields] = useState<string[]>([]);
 
   // Carregar cache de unidades na inicialização
   useEffect(() => {
@@ -519,6 +520,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
       if (!data.operation_hol) missingFields.push("Feriados");
       
       if (missingFields.length > 0) {
+        setInvalidFields(missingFields);
         toast.error(`⚠️ ATENÇÃO: Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`, {
           duration: 6000,
         });
@@ -526,6 +528,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
       }
     }
     
+    setInvalidFields([]);
     onNext();
   };
 
@@ -557,7 +560,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                     }}
                     onBlur={(e) => handleCnpjLookup(e.target.value)}
                     maxLength={18}
-                    className={isLoadingCnpj ? "api-loading" : ""}
+                    className={`${isLoadingCnpj ? "api-loading" : ""} ${invalidFields.includes("CNPJ") ? "border-destructive border-2" : ""}`}
                   />
                   {isLoadingCnpj && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
@@ -602,7 +605,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                       ? "border-green-500 focus:border-green-600" 
                       : data.group_code && !isValidUnitSelected 
                         ? "border-destructive focus:border-destructive"
-                        : ""} ${!isCacheLoaded ? "bg-muted" : ""}`}
+                        : ""} ${!isCacheLoaded ? "bg-muted" : ""} ${invalidFields.includes("Código da Unidade") ? "border-destructive border-2" : ""}`}
                     disabled={!isCacheLoaded}
                   />
                   {isLoadingOldUnits && (
@@ -653,6 +656,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   value={data.group_name}
                   onChange={(e) => onUpdate({ group_name: e.target.value })}
                   disabled={isLoadingCnpj}
+                  className={invalidFields.includes("Nome da Unidade") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -662,7 +666,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   value={data.store_model}
                   onValueChange={(value) => onUpdate({ store_model: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={invalidFields.includes("Modelo da Loja") ? "border-destructive border-2" : ""}>
                     <SelectValue placeholder="Selecione o modelo da loja" />
                   </SelectTrigger>
                   <SelectContent>
@@ -735,7 +739,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                       }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={invalidFields.includes("Fase de Implantação") ? "border-destructive border-2" : ""}>
                       <SelectValue placeholder="Selecione a fase de implementação" />
                     </SelectTrigger>
                     <SelectContent>
@@ -769,7 +773,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                     }}
                     onBlur={(e) => handleCepLookup(e.target.value)}
                     maxLength={9}
-                    className={isLoadingCep ? "api-loading" : ""}
+                    className={`${isLoadingCep ? "api-loading" : ""} ${invalidFields.includes("CEP") ? "border-destructive border-2" : ""}`}
                   />
                   {isLoadingCep && (
                     <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
@@ -785,6 +789,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   value={data.unit_address}
                   onChange={(e) => onUpdate({ unit_address: e.target.value })}
                   disabled={isLoadingCep}
+                  className={invalidFields.includes("Logradouro") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -795,6 +800,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="Número"
                   value={data.unit_number_address}
                   onChange={(e) => onUpdate({ unit_number_address: e.target.value })}
+                  className={invalidFields.includes("Número") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -823,6 +829,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                       placeholder="Apartamento, sala, etc."
                       value={data.unit_address_complement === "Sem Complemento" ? "" : data.unit_address_complement}
                       onChange={(e) => onUpdate({ unit_address_complement: e.target.value })}
+                      className={invalidFields.includes("Complemento") ? "border-destructive border-2" : ""}
                     />
                   </div>
                 )}
@@ -836,6 +843,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   value={data.unit_neighborhood}
                   onChange={(e) => onUpdate({ unit_neighborhood: e.target.value })}
                   disabled={isLoadingCep}
+                  className={invalidFields.includes("Bairro") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -850,6 +858,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                     // REMOVIDO: não mais atualizar group_name quando cidade muda
                   }}
                   disabled={isLoadingCep}
+                  className={invalidFields.includes("Cidade") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -861,6 +870,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   value={data.unit_state}
                   onChange={(e) => onUpdate({ unit_state: e.target.value })}
                   disabled={isLoadingCep}
+                  className={invalidFields.includes("Estado") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -876,6 +886,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   }}
                   disabled={isLoadingCep}
                   maxLength={2}
+                  className={invalidFields.includes("UF") ? "border-destructive border-2" : ""}
                 />
               </div>
             </div>
@@ -893,6 +904,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="e-mail da unidade"
                   value={data.email}
                   onChange={(e) => onUpdate({ email: e.target.value })}
+                  className={invalidFields.includes("Email da Unidade") ? "border-destructive border-2" : ""}
                 />
               </div>
 
@@ -917,6 +929,7 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
                   placeholder="@unidade_instagram"
                   value={data.instagram_profile}
                   onChange={(e) => onUpdate({ instagram_profile: e.target.value })}
+                  className={invalidFields.includes("Instagram da Unidade") ? "border-destructive border-2" : ""}
                 />
               </div>
 
