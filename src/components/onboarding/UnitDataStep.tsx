@@ -464,7 +464,9 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     
     // VALIDAÇÃO OBRIGATÓRIA: Verificar se unidade válida foi selecionada
     if (data.group_code && !isValidUnitSelected) {
-      toast.error("⚠️ Você deve selecionar uma unidade válida da lista de sugestões. Não é permitido digitar códigos aleatórios.");
+      toast.error("⚠️ ATENÇÃO: Você deve selecionar uma unidade válida da lista de sugestões. Não é permitido digitar códigos aleatórios.", {
+        duration: 6000,
+      });
       return;
     }
     
@@ -517,7 +519,9 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
       if (!data.operation_hol) missingFields.push("Feriados");
       
       if (missingFields.length > 0) {
-        toast.error(`Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`);
+        toast.error(`⚠️ ATENÇÃO: Preencha todos os campos obrigatórios: ${missingFields.join(", ")}`, {
+          duration: 6000,
+        });
         return;
       }
     }

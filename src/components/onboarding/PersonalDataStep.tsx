@@ -262,7 +262,9 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
     }
 
     if (errors.length > 0) {
-      toast.error(`Preencha todos os campos obrigatórios: ${errors.join(", ")}`);
+      toast.error(`⚠️ ATENÇÃO: Preencha todos os campos obrigatórios: ${errors.join(", ")}`, {
+        duration: 6000,
+      });
       return;
     }
 

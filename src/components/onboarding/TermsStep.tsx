@@ -42,7 +42,9 @@ export const TermsStep = ({ data, onUpdate, onSubmit, onPrevious, isSubmitting }
 
   const handleSubmit = () => {
     if (!data.system_term_accepted || !data.confidentiality_term_accepted || !data.lgpd_term_accepted) {
-      toast.error("Você deve aceitar todos os termos para continuar");
+      toast.error("⚠️ ATENÇÃO: Você deve aceitar todos os termos para continuar", {
+        duration: 6000,
+      });
       return;
     }
     onSubmit();
