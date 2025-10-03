@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cleanPhoneNumber } from "@/lib/utils";
 
 export interface OnboardingFormData {
   // Franchisee data
@@ -316,7 +317,7 @@ export const useOnboardingForm = () => {
         full_name: formData.full_name,
         birth_date: formData.birth_date || null,
         email: formData.franchisee_email || null,
-        contact: formData.contact,
+        contact: cleanPhoneNumber(formData.contact), // Sempre salvar apenas números
         nationality: formData.nationality || null,
         owner_type: formData.owner_type,
         education: formData.education || null,
@@ -448,7 +449,7 @@ export const useOnboardingForm = () => {
         id: currentFranchiseeId,
         cpf: formData.cpf_rnm,
         nome: formData.full_name,
-        telefone: formData.contact
+        telefone: cleanPhoneNumber(formData.contact) // Enviar apenas números
       });
 
       toast.success("Cadastro realizado com sucesso!");
@@ -605,7 +606,7 @@ export const useOnboardingForm = () => {
         full_name: formData.full_name,
         birth_date: formData.birth_date || null,
         email: formData.franchisee_email || null,
-        contact: formData.contact,
+        contact: cleanPhoneNumber(formData.contact), // Sempre salvar apenas números
         nationality: formData.nationality || null,
         owner_type: formData.owner_type,
         education: formData.education || null,
@@ -657,7 +658,7 @@ export const useOnboardingForm = () => {
         id: franchiseeIdResult,
         cpf: formData.cpf_rnm,
         nome: formData.full_name,
-        telefone: formData.contact
+        telefone: cleanPhoneNumber(formData.contact) // Enviar apenas números
       });
 
       // Verificar se este franqueado já está vinculado a esta unidade
