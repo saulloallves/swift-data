@@ -216,6 +216,40 @@ export const useOnboardingForm = () => {
     setFranchiseeId(franchiseeId);
   };
 
+  // Função auxiliar para notificar n8n quando um novo franqueado é criado
+  const notifyN8n = async (franchiseeData: {
+    id: string;
+    cpf: string;
+    nome: string;
+    telefone: string;
+  }) => {
+    try {
+      console.log('📤 Enviando notificação para n8n:', franchiseeData);
+      
+      const { data, error } = await supabase.functions.invoke(
+        'notify-franchisee-created',
+        {
+          body: {
+            cpf: franchiseeData.cpf,
+            nome: franchiseeData.nome,
+            telefone: franchiseeData.telefone,
+            id: franchiseeData.id
+          }
+        }
+      );
+
+      if (error) {
+        console.error('❌ Erro ao notificar n8n:', error);
+        // Não impede o fluxo principal
+      } else {
+        console.log('✅ n8n notificado com sucesso:', data);
+      }
+    } catch (error) {
+      console.error('❌ Erro inesperado ao notificar n8n:', error);
+      // Não impede o fluxo principal
+    }
+  };
+
   const submitForm = async (): Promise<boolean> => {
     setIsSubmitting(true);
     
@@ -408,6 +442,14 @@ export const useOnboardingForm = () => {
 
       // Store franchisee ID for future unit registrations
       setFranchiseeId(currentFranchiseeId);
+
+      // Notificar n8n sobre o novo franqueado criado
+      await notifyN8n({
+        id: currentFranchiseeId,
+        cpf: formData.cpf_rnm,
+        nome: formData.full_name,
+        telefone: formData.contact
+      });
 
       toast.success("Cadastro realizado com sucesso!");
       return true;
@@ -609,6 +651,14 @@ export const useOnboardingForm = () => {
 
       const franchiseeIdResult = franchiseeResult.data.id;
       setFranchiseeId(franchiseeIdResult);
+
+      // Notificar n8n sobre o franqueado criado/atualizado
+      await notifyN8n({
+        id: franchiseeIdResult,
+        cpf: formData.cpf_rnm,
+        nome: formData.full_name,
+        telefone: formData.contact
+      });
 
       // Verificar se este franqueado já está vinculado a esta unidade
       console.log('🔍 Verificando se este franqueado já está vinculado a esta unidade...');

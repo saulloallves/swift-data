@@ -1,0 +1,110 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface FranchiseeNotification {
+  cpf: string;
+  nome: string;
+  telefone: string;
+  id: string;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    console.log('📨 Recebendo notificação de novo franqueado...');
+
+    const body = await req.json() as FranchiseeNotification;
+    const { cpf, nome, telefone, id } = body;
+
+    // Validação dos campos obrigatórios
+    if (!cpf || !nome || !telefone || !id) {
+      console.error('❌ Campos obrigatórios faltando:', { cpf, nome, telefone, id });
+      return new Response(
+        JSON.stringify({ 
+          error: 'Campos obrigatórios faltando',
+          required: ['cpf', 'nome', 'telefone', 'id']
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('📤 Enviando dados para n8n:', { cpf, nome, telefone, id });
+
+    // Enviar para webhook do n8n
+    const n8nWebhookUrl = 'https://n8n.girabot.com.br/webhook-test/atualizar-senha-franqueado';
+    
+    const response = await fetch(n8nWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        cpf,
+        nome,
+        telefone,
+        id
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Erro ao enviar para n8n:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'Erro ao enviar para n8n',
+          status: response.status,
+          details: errorText
+        }),
+        { 
+          status: 502, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const n8nResponse = await response.text();
+    console.log('✅ Webhook n8n chamado com sucesso:', n8nResponse);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: 'Notificação enviada com sucesso para n8n',
+        n8nResponse 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+
+  } catch (error) {
+    console.error('❌ Erro inesperado:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Erro inesperado ao processar notificação',
+        details: error.message 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});

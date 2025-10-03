@@ -1,1 +1,4 @@
 project_id = "zqexpclhdrbnevxheiax"
+
+[functions.notify-franchisee-created]
+verify_jwt = false
