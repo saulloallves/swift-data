@@ -223,6 +223,7 @@ export const useOnboardingForm = () => {
     cpf: string;
     nome: string;
     telefone: string;
+    codigo_unidade: string;
   }) => {
     try {
       console.log('📤 Enviando notificação para n8n:', franchiseeData);
@@ -449,7 +450,8 @@ export const useOnboardingForm = () => {
         id: currentFranchiseeId,
         cpf: formData.cpf_rnm,
         nome: formData.full_name,
-        telefone: cleanPhoneNumber(formData.contact) // Enviar apenas números
+        telefone: cleanPhoneNumber(formData.contact), // Enviar apenas números
+        codigo_unidade: String(formData.group_code)
       });
 
       toast.success("Cadastro realizado com sucesso!");
@@ -658,7 +660,8 @@ export const useOnboardingForm = () => {
         id: franchiseeIdResult,
         cpf: formData.cpf_rnm,
         nome: formData.full_name,
-        telefone: cleanPhoneNumber(formData.contact) // Enviar apenas números
+        telefone: cleanPhoneNumber(formData.contact), // Enviar apenas números
+        codigo_unidade: String(formData.group_code)
       });
 
       // Verificar se este franqueado já está vinculado a esta unidade

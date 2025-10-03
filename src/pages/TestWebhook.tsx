@@ -19,6 +19,7 @@ const TestWebhook = () => {
     cpf: "47497662597", // CPF limpo (sem formatação)
     nome: "Vicente Davi Felipe Aragão",
     telefone: "84993954726", // Telefone limpo (sem formatação)
+    codigo_unidade: "1234", // Código da unidade de 4 dígitos
     // Dados completos para referência
     email: "vicente.davi.aragao@henrimar.com.br",
     data_nasc: "10/02/1968",
@@ -45,6 +46,7 @@ const TestWebhook = () => {
             nome: testData.nome,
             telefone: testData.telefone,
             id: testData.id,
+            codigo_unidade: testData.codigo_unidade,
           },
         }
       );
@@ -98,6 +100,7 @@ const TestWebhook = () => {
                 <p><span className="text-muted-foreground">Nome:</span> {testData.nome}</p>
                 <p><span className="text-muted-foreground">CPF:</span> {testData.cpf}</p>
                 <p><span className="text-muted-foreground">Telefone:</span> {testData.telefone}</p>
+                <p><span className="text-muted-foreground">Código Unidade:</span> {testData.codigo_unidade}</p>
                 <p><span className="text-muted-foreground">Email:</span> {testData.email}</p>
                 <p><span className="text-muted-foreground">Data Nasc:</span> {testData.data_nasc}</p>
                 <p><span className="text-muted-foreground">Endereço:</span> {testData.endereco}, {testData.numero}</p>

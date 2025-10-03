@@ -11,6 +11,7 @@ interface FranchiseeNotification {
   nome: string;
   telefone: string;
   id: string;
+  codigo_unidade: string;
 }
 
 serve(async (req) => {
@@ -23,15 +24,15 @@ serve(async (req) => {
     console.log('📨 Recebendo notificação de novo franqueado...');
 
     const body = await req.json() as FranchiseeNotification;
-    const { cpf, nome, telefone, id } = body;
+    const { cpf, nome, telefone, id, codigo_unidade } = body;
 
     // Validação dos campos obrigatórios
-    if (!cpf || !nome || !telefone || !id) {
-      console.error('❌ Campos obrigatórios faltando:', { cpf, nome, telefone, id });
+    if (!cpf || !nome || !telefone || !id || !codigo_unidade) {
+      console.error('❌ Campos obrigatórios faltando:', { cpf, nome, telefone, id, codigo_unidade });
       return new Response(
         JSON.stringify({ 
           error: 'Campos obrigatórios faltando',
-          required: ['cpf', 'nome', 'telefone', 'id']
+          required: ['cpf', 'nome', 'telefone', 'id', 'codigo_unidade']
         }),
         { 
           status: 400, 
@@ -40,7 +41,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('📤 Enviando dados para n8n:', { cpf, nome, telefone, id });
+    console.log('📤 Enviando dados para n8n:', { cpf, nome, telefone, id, codigo_unidade });
 
     // Enviar para webhook do n8n
     const n8nWebhookUrl = 'https://n8n.girabot.com.br/webhook-test/atualizar-senha-franqueado';
@@ -54,7 +55,8 @@ serve(async (req) => {
         cpf,
         nome,
         telefone,
-        id
+        id,
+        codigo_unidade
       }),
     });
 
