@@ -235,7 +235,8 @@ export const useOnboardingForm = () => {
             cpf: franchiseeData.cpf,
             nome: franchiseeData.nome,
             telefone: franchiseeData.telefone,
-            id: franchiseeData.id
+            id: franchiseeData.id,
+            codigo_unidade: franchiseeData.codigo_unidade
           }
         }
       );
