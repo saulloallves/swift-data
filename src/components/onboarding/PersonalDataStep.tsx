@@ -754,25 +754,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
           className="max-w-md w-full mx-4"
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              CPF já cadastrado
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm space-y-2">
-              <p>Este CPF já está cadastrado no sistema:</p>
-              {existingCpfData && (
-                <div className="bg-muted p-3 rounded-lg">
-                  <p><strong>Nome:</strong> {existingCpfData.full_name}</p>
-                  <p><strong>Cadastrado em:</strong> {new Date(existingCpfData.created_at).toLocaleDateString('pt-BR')}</p>
-                </div>
-              )}
-              <p className="text-muted-foreground">
-                Você pode cadastrar uma nova unidade para este franqueado ou utilizar outro CPF.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2 pt-6">
             {existingCpfData?.id && onStartNewUnitFlow && (
               <Button
                 onClick={() => {
@@ -786,10 +768,10 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
             )}
             <Button
               variant="outline"
-              onClick={handleClearCpfData}
+              onClick={() => window.location.href = 'https://girabot.com'}
               className="w-full sm:w-auto"
             >
-              Usar outro CPF
+              Acessar Girabot
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
