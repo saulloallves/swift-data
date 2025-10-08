@@ -754,7 +754,15 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
           className="max-w-md w-full mx-4"
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2 pt-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center sm:text-left">
+              Já encontramos o seu cadastro!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center sm:text-left">
+              Está tudo certo com o seu cadastro, o que deseja fazer a seguir?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             {existingCpfData?.id && onStartNewUnitFlow && (
               <Button
                 onClick={() => {
