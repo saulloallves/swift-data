@@ -776,7 +776,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
             )}
             <Button
               variant="outline"
-              onClick={() => window.location.href = 'https://girabot.com'}
+              onClick={() => window.location.href = 'https://fluxoapi.contatocrescieperdi.com.br/girabot'}
               className="w-full sm:w-auto"
             >
               Acessar Girabot
