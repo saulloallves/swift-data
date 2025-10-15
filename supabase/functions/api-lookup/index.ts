@@ -69,6 +69,9 @@ async function lookupCpf(cpf: string) {
     };
   }
 
+  const startTime = Date.now();
+  console.log(`⏱️ [${new Date().toISOString()}] Iniciando consulta HubDev API para CPF: ${cpf}`);
+
   try {
     // Get current date in DD/MM/YYYY format for the 'data' parameter
     const currentDate = new Date().toLocaleDateString('pt-BR');
@@ -78,20 +81,30 @@ async function lookupCpf(cpf: string) {
     
     console.log(`Calling HUBDev API: ${url.replace(hubdevApiKey, '[TOKEN_HIDDEN]')}`);
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Lovable-API-Client/1.0',
-      },
-    });
+    // Criar AbortController com timeout de 10 segundos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      throw new Error(`HubDev API HTTP error: ${response.status}`);
-    }
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Lovable-API-Client/1.0',
+        },
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    
-    console.log('HubDev API response:', JSON.stringify(data, null, 2));
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HubDev API HTTP error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [${new Date().toISOString()}] Resposta HubDev recebida em ${duration}ms`);
+      console.log('HubDev API response:', JSON.stringify(data, null, 2));
     
     // Check if the API returned success
     if (data.return === "OK" && data.result) {
@@ -122,8 +135,22 @@ async function lookupCpf(cpf: string) {
         error: 'CPF não encontrado na base da Receita Federal'
       };
     }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        const duration = Date.now() - startTime;
+        console.error(`⏱️ [${new Date().toISOString()}] Timeout na consulta HubDev API após ${duration}ms`);
+        return {
+          success: false,
+          error: 'Tempo esgotado ao consultar CPF. Tente novamente ou preencha manualmente.'
+        };
+      }
+      throw fetchError;
+    }
   } catch (error) {
-    console.error('CPF lookup error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`❌ [${new Date().toISOString()}] Erro na consulta CPF após ${duration}ms:`, error);
     return {
       success: false,
       error: 'Erro ao consultar CPF na base da Receita Federal'

@@ -84,9 +84,36 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
       }
 
       // Se não existe no banco, continuar com a API externa
-      const { data: result, error } = await supabase.functions.invoke('api-lookup', {
+      console.log('⏱️ Iniciando lookup de CPF na API externa:', cleanedCpf, new Date().toISOString());
+      
+      // Criar timeout client-side de 15 segundos
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 15000);
+      });
+
+      const invokePromise = supabase.functions.invoke('api-lookup', {
         body: { type: 'cpf', value: cleanedCpf }
       });
+
+      let result, error;
+      try {
+        const response: any = await Promise.race([invokePromise, timeoutPromise]);
+        result = response.data;
+        error = response.error;
+        console.log('✅ Lookup finalizado:', new Date().toISOString());
+      } catch (timeoutError: any) {
+        if (timeoutError.message === 'TIMEOUT') {
+          console.error('⏱️ Timeout na consulta de CPF após 15 segundos');
+          toast.error('Tempo esgotado ao consultar CPF.', {
+            duration: 5000
+          });
+          toast.info('Por favor, preencha os dados manualmente.', {
+            duration: 5000
+          });
+          return;
+        }
+        throw timeoutError;
+      }
 
       if (error) throw error;
 
@@ -97,7 +124,13 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         });
         toast.success("Dados encontrados e preenchidos automaticamente");
       } else {
-        toast.warning("CPF não encontrado na base de dados");
+        const errorMessage = result?.error || "CPF não encontrado na base de dados";
+        toast.warning(errorMessage, {
+          duration: 5000
+        });
+        toast.info("Por favor, preencha os dados manualmente.", {
+          duration: 5000
+        });
       }
     } catch (error) {
       console.error('CPF lookup error:', error);
