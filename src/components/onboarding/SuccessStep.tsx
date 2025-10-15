@@ -29,32 +29,6 @@ export const SuccessStep = ({ onAddNewUnit }: SuccessStepProps) => {
               </p>
             </div>
 
-            <div className="bg-card rounded-lg p-6 border">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
-                Próximos Passos
-              </h2>
-              <div className="space-y-3 text-left">
-                <div className="flex items-center space-x-3">
-                  <Mail className="h-5 w-5 text-primary" />
-                  <span className="text-muted-foreground">
-                    Você receberá um e-mail de confirmação em breve
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Download className="h-5 w-5 text-primary" />
-                  <span className="text-muted-foreground">
-                    Nossa equipe entrará em contato para os próximos passos
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <ArrowRight className="h-5 w-5 text-primary" />
-                  <span className="text-muted-foreground">
-                    O processo de onboarding será iniciado dentro de 24h
-                  </span>
-                </div>
-              </div>
-            </div>
-
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Caso tenha alguma dúvida ou precise atualizar suas informações, 
