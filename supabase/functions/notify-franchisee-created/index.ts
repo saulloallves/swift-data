@@ -98,10 +98,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro inesperado:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
       JSON.stringify({ 
         error: 'Erro inesperado ao processar notificação',
-        details: error.message 
+        details: errorMessage
       }),
       { 
         status: 500, 

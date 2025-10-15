@@ -36,15 +36,19 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
 
   const checkCpfInDatabase = async (cpf: string) => {
     try {
+      console.log('🔍 Verificando CPF no banco:', cpf);
       const { data: existingFranqueado, error } = await supabase
         .from('franqueados')
         .select('id, full_name, created_at')
         .eq('cpf_rnm', cpf)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        console.error('❌ Erro ao consultar CPF:', error);
         throw error;
       }
+
+      console.log('✅ Resultado da consulta:', existingFranqueado ? 'CPF encontrado' : 'CPF não encontrado');
 
       return {
         exists: !!existingFranqueado,
@@ -52,7 +56,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         franchiseeId: existingFranqueado?.id || null
       };
     } catch (error) {
-      console.error('Error checking CPF in database:', error);
+      console.error('❌ Erro ao verificar CPF no banco:', error);
       return { exists: false, data: null, franchiseeId: null };
     }
   };
