@@ -104,10 +104,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
       } catch (timeoutError: any) {
         if (timeoutError.message === 'TIMEOUT') {
           console.error('⏱️ Timeout na consulta de CPF após 15 segundos');
-          toast.error('Tempo esgotado ao consultar CPF.', {
-            duration: 5000
-          });
-          toast.info('Por favor, preencha os dados manualmente.', {
+          toast.warning('CPF não encontrado. Por favor, preencha os dados manualmente.', {
             duration: 5000
           });
           return;
@@ -124,11 +121,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         });
         toast.success("Dados encontrados e preenchidos automaticamente");
       } else {
-        const errorMessage = result?.error || "CPF não encontrado na base de dados";
-        toast.warning(errorMessage, {
-          duration: 5000
-        });
-        toast.info("Por favor, preencha os dados manualmente.", {
+        toast.warning("CPF não encontrado. Por favor, preencha os dados manualmente.", {
           duration: 5000
         });
       }
