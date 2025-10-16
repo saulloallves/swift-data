@@ -60,7 +60,7 @@ const TestOnboarding = () => {
             full_name: 'Teste Sistema Debug',
             contact: '11999999999',
             owner_type: 'Sócio',
-            group_code: 9999,
+            group_code: 1659,
             group_name: 'Unidade Teste Debug',
             store_model: 'Franquia',
             store_phase: 'operacao',
@@ -239,8 +239,9 @@ const TestOnboarding = () => {
               <h4 className="font-semibold mb-2">📋 Instruções:</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
                 <li>• <strong>Health Check:</strong> Verifica se a Edge Function está ativa e com secrets configurados</li>
-                <li>• <strong>Test Submit Form:</strong> Testa cadastro completo de franqueado + unidade</li>
+                <li>• <strong>Test Submit Form:</strong> Testa cadastro completo (usa código de unidade: 1659)</li>
                 <li>• <strong>Test Link Unit:</strong> Testa vinculação de franqueado a unidade existente</li>
+                <li className="mt-2 pt-2 border-t">📋 <strong>Códigos de teste válidos:</strong> 1659, 1724, 1723</li>
               </ul>
               <p className="text-sm text-muted-foreground mt-3">
                 ⚠️ <strong>Importante:</strong> Todos os logs são exibidos no console do navegador
