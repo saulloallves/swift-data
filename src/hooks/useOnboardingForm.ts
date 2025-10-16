@@ -253,21 +253,81 @@ export const useOnboardingForm = () => {
     }
   };
 
-  const submitForm = async (): Promise<boolean> => {
+  const submitForm = async (retryCount = 0): Promise<boolean> => {
     setIsSubmitting(true);
     
     try {
-      console.log('🚀 Chamando Edge Function onboarding-submit');
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO SUBMIT FORM ====================`);
+      console.log('📊 FormData completo:', JSON.stringify(formData, null, 2));
       
-      const { data, error } = await supabase.functions.invoke('onboarding-submit', {
-        body: {
-          action: 'submitForm',
-          formData: formData
-        }
+      // Validação do payload antes da invocação
+      if (!formData.cpf_rnm || !formData.full_name) {
+        console.error('❌ VALIDAÇÃO FALHOU: CPF ou nome completo ausente');
+        toast.error('CPF e nome completo são obrigatórios');
+        return false;
+      }
+
+      // Limpar flags especiais que podem causar comportamento inesperado
+      const cleanFormData = { ...formData };
+      if (!cleanFormData._linking_existing_unit) {
+        delete cleanFormData._linking_existing_unit;
+        delete cleanFormData._existing_unit_id;
+      }
+
+      const payload = {
+        action: 'submitForm',
+        formData: cleanFormData
+      };
+
+      console.log('🎯 Chamando Edge Function: onboarding-submit');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta da Edge Function...');
+      
+      const invokeStart = Date.now();
+
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
       });
 
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
+
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
       if (error) {
-        console.error('❌ Erro ao chamar Edge Function:', error);
+        console.error('❌ ERRO AO CHAMAR EDGE FUNCTION:', error);
+        console.error('  - Código:', error.code);
+        console.error('  - Mensagem:', error.message);
+        console.error('  - Detalhes:', JSON.stringify(error.details || {}));
+        
+        // Detectar erro de RLS especificamente
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO! A EDGE FUNCTION NÃO ESTÁ SENDO USADA! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS. Entre em contato com suporte técnico.', {
+            duration: 10000
+          });
+          return false;
+        }
+
+        // Retry automático em caso de erro de rede/timeout
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return submitForm(retryCount + 1);
+        }
+        
         toast.error(`Erro ao processar cadastro: ${error.message}`);
         return false;
       }
@@ -278,138 +338,303 @@ export const useOnboardingForm = () => {
         return false;
       }
 
-      console.log('✅ Edge Function executada com sucesso:', data);
-      
+      console.log('✅ EDGE FUNCTION EXECUTADA COM SUCESSO!');
+      console.log('📊 Dados retornados:', data);
+
       // Armazenar franchiseeId para futuras submissões de unidades
       if (data.franchiseeId) {
+        console.log('💾 Armazenando franchiseeId:', data.franchiseeId);
         setFranchiseeId(data.franchiseeId);
       }
 
       // Notificar n8n sobre o novo franqueado criado
       if (data.franchiseeId) {
-        await notifyN8n({
-          id: data.franchiseeId,
-          cpf: formData.cpf_rnm,
-          nome: formData.full_name,
-          telefone: cleanPhoneNumber(formData.contact),
-          codigo_unidade: String(formData.group_code)
-        });
+        console.log('📤 Iniciando notificação ao n8n...');
+        try {
+          await notifyN8n({
+            id: data.franchiseeId,
+            cpf: formData.cpf_rnm,
+            nome: formData.full_name,
+            telefone: cleanPhoneNumber(formData.contact),
+            codigo_unidade: String(formData.group_code)
+          });
+          console.log('✅ n8n notificado com sucesso');
+        } catch (n8nError) {
+          console.error('⚠️ Erro ao notificar n8n (não-crítico):', n8nError);
+          // Não bloquear o fluxo principal se o webhook falhar
+        }
       }
 
+      // Limpar flags especiais após sucesso
+      updateFormData({
+        _linking_existing_unit: undefined,
+        _existing_unit_id: undefined
+      });
+
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM SUBMIT FORM ====================`);
       toast.success(data.message || "Cadastro realizado com sucesso!");
       return true;
       
     } catch (error) {
-      console.error('❌ Erro inesperado:', error);
+      console.error('❌ ERRO INESPERADO:', error);
+      console.error('  - Tipo:', typeof error);
+      console.error('  - Stack:', error instanceof Error ? error.stack : 'N/A');
+      
+      // Detectar se é erro de RLS mesmo em exceção
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada. Entre em contato com suporte.', {
+          duration: 10000
+        });
+        return false;
+      }
+
       toast.error("Erro inesperado ao submeter o formulário. Verifique os dados e tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Submit finalizado (isSubmitting = false)');
     }
   };
 
-  const submitNewUnit = async (): Promise<boolean> => {
+  const submitNewUnit = async (retryCount = 0): Promise<boolean> => {
     if (!franchiseeId) {
       toast.error("Erro: ID do franqueado não encontrado");
       return false;
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      console.log('🚀 Chamando Edge Function onboarding-submit para nova unidade');
-      
-      const { data, error } = await supabase.functions.invoke('onboarding-submit', {
-        body: {
-          action: 'submitNewUnit',
-          formData: {
-            ...formData,
-            franchiseeId: franchiseeId
-          }
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO SUBMIT NEW UNIT ====================`);
+      console.log('👤 FranchiseeId:', franchiseeId);
+      console.log('📊 FormData:', JSON.stringify(formData, null, 2));
+
+      // Validação do payload
+      if (!formData.group_code || formData.group_code <= 0) {
+        console.error('❌ VALIDAÇÃO FALHOU: Código de grupo inválido');
+        toast.error('Código da unidade é obrigatório');
+        return false;
+      }
+
+      const payload = {
+        action: 'submitNewUnit',
+        formData: {
+          ...formData,
+          franchiseeId
         }
+      };
+
+      console.log('🎯 Chamando Edge Function: onboarding-submit (submitNewUnit)');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta...');
+
+      const invokeStart = Date.now();
+
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
       });
 
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
+
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
       if (error) {
-        console.error('❌ Erro ao chamar Edge Function:', error);
-        toast.error(`Erro ao processar nova unidade: ${error.message}`);
+        console.error('❌ ERRO AO CHAMAR EDGE FUNCTION:', error);
+        
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO EM SUBMIT NEW UNIT! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS.', {
+            duration: 10000
+          });
+          return false;
+        }
+
+        // Retry automático
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return submitNewUnit(retryCount + 1);
+        }
+
+        toast.error(`Erro ao cadastrar nova unidade: ${error.message}`);
         return false;
       }
 
       if (!data.success) {
         console.error('❌ Edge Function retornou erro:', data.error);
-        toast.error(data.error || 'Erro ao processar nova unidade');
+        toast.error(data.error || 'Erro ao cadastrar nova unidade');
         return false;
       }
 
-      console.log('✅ Edge Function executada com sucesso:', data);
+      console.log('✅ NOVA UNIDADE CADASTRADA COM SUCESSO!');
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM SUBMIT NEW UNIT ====================`);
+      
       toast.success(data.message || "Nova unidade cadastrada com sucesso!");
       return true;
-      
     } catch (error) {
-      console.error('❌ Erro inesperado:', error);
+      console.error('❌ ERRO INESPERADO:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO (SUBMIT NEW UNIT)! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada.', {
+          duration: 10000
+        });
+        return false;
+      }
+
       toast.error("Erro inesperado ao cadastrar nova unidade. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Submit new unit finalizado');
     }
   };
 
-  const linkExistingUnit = async (unitId: string): Promise<boolean> => {
+  const linkExistingUnit = async (unitId: string, retryCount = 0): Promise<boolean> => {
     setIsSubmitting(true);
     
     try {
-      console.log('🚀 Chamando Edge Function onboarding-submit para vincular unidade existente');
-      
-      const { data, error } = await supabase.functions.invoke('onboarding-submit', {
-        body: {
-          action: 'submitForm',
-          formData: {
-            ...formData,
-            _linking_existing_unit: true,
-            _existing_unit_id: unitId
-          }
-        }
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO LINK EXISTING UNIT ====================`);
+      console.log('🔗 Unit ID:', unitId);
+      console.log('📊 FormData:', JSON.stringify(formData, null, 2));
+
+      // Preparar dados com flags especiais para a Edge Function
+      const linkFormData = {
+        ...formData,
+        _linking_existing_unit: true,
+        _existing_unit_id: unitId
+      };
+
+      const payload = {
+        action: 'submitForm',
+        formData: linkFormData
+      };
+
+      console.log('🎯 Chamando Edge Function: onboarding-submit (linkExistingUnit)');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta...');
+
+      const invokeStart = Date.now();
+
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
       });
 
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
+
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
       if (error) {
-        console.error('❌ Erro ao chamar Edge Function:', error);
-        toast.error(`Erro ao vincular unidade: ${error.message}`);
+        console.error('❌ ERRO AO VINCULAR UNIDADE EXISTENTE:', error);
+        
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO EM LINK EXISTING UNIT! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS.', {
+            duration: 10000
+          });
+          return false;
+        }
+
+        // Retry automático
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return linkExistingUnit(unitId, retryCount + 1);
+        }
+
+        toast.error(`Erro ao vincular à unidade existente: ${error.message}`);
         return false;
       }
 
       if (!data.success) {
         console.error('❌ Edge Function retornou erro:', data.error);
-        toast.error(data.error || 'Erro ao vincular unidade');
+        toast.error(data.error || 'Erro ao vincular à unidade existente');
         return false;
       }
 
-      console.log('✅ Edge Function executada com sucesso:', data);
-      
-      // Armazenar franchiseeId
+      console.log('✅ VINCULAÇÃO REALIZADA COM SUCESSO!');
+
       if (data.franchiseeId) {
+        console.log('💾 Armazenando franchiseeId:', data.franchiseeId);
         setFranchiseeId(data.franchiseeId);
       }
 
       // Notificar n8n
       if (data.franchiseeId) {
-        await notifyN8n({
-          id: data.franchiseeId,
-          cpf: formData.cpf_rnm,
-          nome: formData.full_name,
-          telefone: cleanPhoneNumber(formData.contact),
-          codigo_unidade: String(formData.group_code)
-        });
+        console.log('📤 Iniciando notificação ao n8n...');
+        try {
+          await notifyN8n({
+            id: data.franchiseeId,
+            cpf: formData.cpf_rnm,
+            nome: formData.full_name,
+            telefone: cleanPhoneNumber(formData.contact),
+            codigo_unidade: String(formData.group_code)
+          });
+          console.log('✅ n8n notificado com sucesso');
+        } catch (n8nError) {
+          console.error('⚠️ Erro ao notificar n8n (não-crítico):', n8nError);
+        }
       }
 
+      // Limpar flags especiais após sucesso
+      updateFormData({
+        _linking_existing_unit: undefined,
+        _existing_unit_id: undefined
+      });
+
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM LINK EXISTING UNIT ====================`);
+      
       toast.success(data.message || "Franqueado vinculado à unidade com sucesso!");
       return true;
-
     } catch (error) {
-      console.error('❌ Erro inesperado:', error);
-      toast.error("Erro inesperado ao vincular unidade. Tente novamente.");
+      console.error('❌ ERRO INESPERADO:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO (LINK EXISTING UNIT)! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada.', {
+          duration: 10000
+        });
+        return false;
+      }
+
+      toast.error("Erro inesperado ao vincular à unidade. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Link existing unit finalizado');
     }
   };
 

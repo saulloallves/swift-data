@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Terms from "./pages/Terms";
 import TestWebhook from "./pages/TestWebhook";
+import TestOnboarding from "./pages/TestOnboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/terms/:termType" element={<Terms />} />
           <Route path="/test-webhook" element={<TestWebhook />} />
+          <Route path="/test-onboarding" element={<TestOnboarding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -17,6 +17,25 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Health check endpoint
+  if (req.method === 'GET') {
+    console.log('🏥 Health check requested');
+    return new Response(JSON.stringify({
+      status: 'healthy',
+      function: 'onboarding-submit',
+      timestamp: new Date().toISOString(),
+      environment: {
+        hasServiceRole: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+        hasSupabaseUrl: !!Deno.env.get('SUPABASE_URL')
+      }
+    }), {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+
   try {
     console.log('🚀 Iniciando onboarding-submit');
     
