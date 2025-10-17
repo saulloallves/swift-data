@@ -108,7 +108,7 @@ async function checkCnpjExists(cnpj: string) {
     }
 
     const unitData = {
-      fantasy_name: unit.fantasy_name || 'Unidade sem nome',
+      fantasy_name: unit.group_name || unit.fantasy_name || 'Unidade sem nome',
       franqueado_name: franchiseeName,
       unit_id: unit.id,
       group_code: unit.group_code || 0,
