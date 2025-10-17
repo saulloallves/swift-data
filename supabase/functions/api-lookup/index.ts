@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,7 @@ const corsHeaders = {
 };
 
 interface LookupRequest {
-  type: 'cpf' | 'cnpj' | 'cep';
+  type: 'cpf' | 'cnpj' | 'cep' | 'check-cnpj-exists';
   value: string;
 }
 
@@ -33,6 +34,9 @@ serve(async (req) => {
       case 'cep':
         result = await lookupCep(value);
         break;
+      case 'check-cnpj-exists':
+        result = await checkCnpjExists(value);
+        break;
       default:
         throw new Error('Invalid lookup type');
     }
@@ -53,6 +57,73 @@ serve(async (req) => {
     });
   }
 });
+
+async function checkCnpjExists(cnpj: string) {
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // 1. Find the unit by CNPJ
+    const { data: unit, error: unitError } = await supabaseAdmin
+      .from('unidades')
+      .select('id, fantasy_name, group_code, group_name, cnpj')
+      .eq('cnpj', cnpj)
+      .maybeSingle();
+
+    if (unitError) throw unitError;
+
+    if (!unit) {
+      return { exists: false };
+    }
+
+    // 2. Find the associated franchisee
+    let franchiseeName = 'Franqueado não encontrado';
+    const { data: relation, error: relationError } = await supabaseAdmin
+      .from('franqueados_unidades')
+      .select('franqueado_id')
+      .eq('unidade_id', unit.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (relationError) {
+        console.error("Error fetching franqueado_unidades:", relationError.message);
+    }
+
+    if (relation?.franqueado_id) {
+      const { data: franchisee, error: franchiseeError } = await supabaseAdmin
+        .from('franqueados')
+        .select('full_name')
+        .eq('id', relation.franqueado_id)
+        .maybeSingle();
+      
+      if (franchiseeError) {
+          console.error("Error fetching franqueados:", franchiseeError.message);
+      }
+
+      if (franchisee) {
+        franchiseeName = franchisee.full_name;
+      }
+    }
+
+    const unitData = {
+      fantasy_name: unit.fantasy_name || 'Unidade sem nome',
+      franqueado_name: franchiseeName,
+      unit_id: unit.id,
+      group_code: unit.group_code || 0,
+      group_name: unit.group_name || '',
+      cnpj: unit.cnpj || cnpj
+    };
+
+    return { exists: true, unitData };
+
+  } catch (error) {
+    console.error('Error in checkCnpjExists:', error);
+    return { exists: false, error: error.message };
+  }
+}
+
 
 async function lookupCpf(cpf: string) {
   const hubdevApiKey = Deno.env.get('HUBDEV_API_KEY');

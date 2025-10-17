@@ -223,115 +223,6 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
     }
   }, [data.cnpj]);
 
-  const checkExistingCnpj = async (cnpj: string) => {
-    console.log('🔍 Verificando CNPJ existente:', cnpj);
-    
-    // Primeiro, buscar a unidade
-    const { data: unidade, error: unidadeError } = await supabase
-      .from('unidades')
-      .select('id, fantasy_name, group_code, group_name, cnpj')
-      .eq('cnpj', cnpj)
-      .maybeSingle();
-
-    console.log('📋 Resultado da consulta unidade:', { unidade, unidadeError });
-
-    if (unidadeError) throw unidadeError;
-
-    if (!unidade) {
-      console.log('❌ Unidade não encontrada');
-      return { exists: false };
-    }
-
-    console.log('✅ Unidade encontrada, buscando franqueado associado...');
-    
-    let franqueadoName = 'Franqueado não encontrado';
-    
-    try {
-      // Primeiro, tentar a consulta simples com join
-      const { data: relacao, error: relacaoError } = await supabase
-        .from('franqueados_unidades')
-        .select(`
-          franqueados(
-            full_name
-          )
-        `)
-        .eq('unidade_id', unidade.id)
-        .limit(1)
-        .maybeSingle();
-
-      console.log('👤 Resultado da consulta com join:', { relacao, relacaoError });
-
-      if (!relacaoError && relacao?.franqueados) {
-        franqueadoName = (relacao.franqueados as any).full_name;
-      } else {
-        // Fallback: buscar em duas etapas
-        console.log('🔄 Tentando consulta de fallback...');
-        
-        const { data: relacaoFallback, error: relacaoFallbackError } = await supabase
-          .from('franqueados_unidades')
-          .select('franqueado_id')
-          .eq('unidade_id', unidade.id)
-          .limit(1)
-          .maybeSingle();
-
-        console.log('📋 Relação encontrada:', { relacaoFallback, relacaoFallbackError });
-
-        if (relacaoFallback?.franqueado_id) {
-          console.log('🔍 Buscando franqueado com ID:', relacaoFallback.franqueado_id);
-          
-          const { data: franqueado, error: franqueadoError } = await supabase
-            .from('franqueados')
-            .select('full_name')
-            .eq('id', relacaoFallback.franqueado_id)
-            .maybeSingle();
-
-          console.log('👤 Franqueado encontrado:', { franqueado, franqueadoError });
-          console.log('🔍 Auth status:', { authUser: await supabase.auth.getUser() });
-
-          if (franqueadoError) {
-            console.error('❌ Erro ao buscar franqueado:', franqueadoError);
-          }
-
-          if (franqueado?.full_name) {
-            franqueadoName = franqueado.full_name;
-          } else {
-            // Se não conseguiu buscar por RLS, usar função administrativa
-            console.log('🔧 Tentando função administrativa...');
-            try {
-              const { data: adminResult } = await supabase.rpc('get_franqueados_secure');
-              const franqueadoAdmin = adminResult?.find((f: any) => f.id === relacaoFallback.franqueado_id);
-              if (franqueadoAdmin?.full_name) {
-                franqueadoName = franqueadoAdmin.full_name;
-                console.log('✅ Nome encontrado via função administrativa:', franqueadoName);
-              }
-            } catch (adminError) {
-              console.error('❌ Erro na função administrativa:', adminError);
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erro ao buscar franqueado:', error);
-    }
-
-    // Sempre retornar que existe se a unidade foi encontrada
-    const unitData = {
-      fantasy_name: unidade.fantasy_name || 'Unidade sem nome',
-      franqueado_name: franqueadoName,
-      unit_id: unidade.id,
-      group_code: unidade.group_code || 0,
-      group_name: unidade.group_name || '',
-      cnpj: unidade.cnpj || cnpj
-    };
-    
-    console.log('🚨 Unidade já existe! Dados finais:', unitData);
-    
-    return {
-      exists: true,
-      unitData
-    };
-  };
-
   const handleLinkExistingUnit = async () => {
     if (!existingUnitInfo?.unit_id) return;
     
@@ -367,45 +258,38 @@ export const UnitDataStep = ({ data, onUpdate, onNext, onPrevious, linkExistingU
 
   const handleCnpjLookup = async (cnpj: string) => {
     const cleanedCnpj = cleanCnpj(cnpj);
-    console.log('🔍 CNPJ lookup iniciado:', { cnpj, cleanedCnpj, length: cleanedCnpj.length });
-    
     if (cleanedCnpj.length !== 14) {
-      console.log('❌ CNPJ inválido, cancelando lookup');
       return;
     }
 
     setIsLoadingCnpj(true);
     try {
-      console.log('🚀 Verificando se CNPJ já existe no banco...');
-      
-      // Primeiro, verificar se o CNPJ já existe no banco
-      const existingUnit = await checkExistingCnpj(cleanedCnpj);
-      
-      console.log('📊 Resultado da verificação:', existingUnit);
-      
-      if (existingUnit.exists && existingUnit.unitData) {
-        console.log('🚨 CNPJ já existe! Mostrando modal...', existingUnit.unitData);
-        setExistingUnitInfo(existingUnit.unitData);
+      // Step 1: Check if CNPJ exists in our DB via Edge Function
+      const { data: checkResult, error: checkError } = await supabase.functions.invoke('api-lookup', {
+        body: { type: 'check-cnpj-exists', value: cleanedCnpj }
+      });
+
+      if (checkError) throw checkError;
+
+      if (checkResult.exists && checkResult.unitData) {
+        console.log('🚨 CNPJ já existe! Mostrando modal...', checkResult.unitData);
+        setExistingUnitInfo(checkResult.unitData);
         setShowExistingUnitModal(true);
-        console.log('🎭 Modal deveria estar aberto agora!');
-        return;
+        return; // Stop the flow here
       }
 
+      // Step 2: If it doesn't exist, proceed with external API lookup
       console.log('✅ CNPJ não existe, consultando API externa...');
-      
-      // Se não existe, prosseguir com a consulta na API externa
-      const { data: result, error } = await supabase.functions.invoke('api-lookup', {
+      const { data: lookupResult, error: lookupError } = await supabase.functions.invoke('api-lookup', {
         body: { type: 'cnpj', value: cleanedCnpj }
       });
 
-      if (error) throw error;
+      if (lookupError) throw lookupError;
 
-      if (result?.success) {
-        const fantasyName = result.data.nome || result.data.razao_social || "";
-        
+      if (lookupResult?.success) {
+        const fantasyName = lookupResult.data.nome || lookupResult.data.razao_social || "";
         onUpdate({
           fantasy_name: fantasyName,
-          // REMOVIDO: não mais atualizar group_name aqui, pois o nome vem da seleção do código da unidade
         });
         toast.success("Dados da empresa encontrados");
       } else {
