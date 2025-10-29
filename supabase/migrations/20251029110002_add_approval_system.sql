@@ -20,9 +20,9 @@ CREATE TABLE IF NOT EXISTS onboarding_requests (
     
     -- Existence flags and foreign keys
     franchisee_exists BOOLEAN DEFAULT false,
-    franchisee_id UUID REFERENCES franchisees(id) ON DELETE SET NULL,
+    franchisee_id UUID REFERENCES franqueados(id) ON DELETE SET NULL,
     unit_exists BOOLEAN DEFAULT false,
-    unit_id UUID REFERENCES franchise_units(id) ON DELETE SET NULL,
+    unit_id UUID REFERENCES unidades(id) ON DELETE SET NULL,
     
     -- Workflow status
     status TEXT NOT NULL DEFAULT 'pending',
