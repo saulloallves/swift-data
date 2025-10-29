@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, Download, Mail, Plus, Copy, AlertCircle } from "lucide-react";
+import { CheckCircle, ArrowRight, Download, Mail, Plus, Copy, AlertCircle, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 
 interface SuccessStepProps {
   onAddNewUnit?: () => void;
@@ -17,8 +18,14 @@ export const SuccessStep = ({
   requestType,
   needsApproval = false 
 }: SuccessStepProps) => {
+  const navigate = useNavigate();
+
   const handleNewRegistration = () => {
     window.location.reload();
+  };
+
+  const handleCheckStatus = () => {
+    navigate('/check-status');
   };
 
   const copyToClipboard = () => {
@@ -127,6 +134,12 @@ export const SuccessStep = ({
               )}
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                {needsApproval && (
+                  <Button onClick={handleCheckStatus} variant="outline" className="gap-2">
+                    <Search className="h-4 w-4" />
+                    Consultar Status
+                  </Button>
+                )}
                 {onAddNewUnit && !needsApproval && (
                   <Button onClick={onAddNewUnit} variant="outline" className="gap-2">
                     <Plus className="h-4 w-4" />
