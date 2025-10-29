@@ -35,7 +35,11 @@ const Index = () => {
     linkExistingUnit, 
     isSubmitting, 
     franchiseeId,
-    setExistingFranchisee 
+    setExistingFranchisee,
+    // Novos estados para sistema de aprovação
+    requestNumber,
+    requestType,
+    needsApproval,
   } = useOnboardingForm();
 
   // Check for saved state and URL parameters on component mount
@@ -150,7 +154,14 @@ const Index = () => {
           />
         );
       case "success":
-        return <SuccessStep onAddNewUnit={franchiseeId ? handleAddNewUnit : undefined} />;
+        return (
+          <SuccessStep 
+            onAddNewUnit={franchiseeId ? handleAddNewUnit : undefined}
+            requestNumber={requestNumber || undefined}
+            requestType={requestType || undefined}
+            needsApproval={needsApproval}
+          />
+        );
       default:
         return null;
     }

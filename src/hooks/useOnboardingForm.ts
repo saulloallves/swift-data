@@ -165,6 +165,11 @@ export const useOnboardingForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [franchiseeId, setFranchiseeId] = useState<string | null>(null);
   const [existingFranchiseeId, setExistingFranchiseeId] = useState<string | null>(null);
+  
+  // Novos estados para sistema de aprovação
+  const [requestNumber, setRequestNumber] = useState<string | null>(null);
+  const [requestType, setRequestType] = useState<string | null>(null);
+  const [needsApproval, setNeedsApproval] = useState(false);
 
   const updateFormData = (updates: Partial<OnboardingFormData> | OnboardingFormData) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -341,6 +346,21 @@ export const useOnboardingForm = () => {
       console.log('✅ EDGE FUNCTION EXECUTADA COM SUCESSO!');
       console.log('📊 Dados retornados:', data);
 
+      // Verificar se é sistema de aprovação
+      if (data.needsApproval) {
+        console.log('⏳ Cadastro enviado para APROVAÇÃO');
+        console.log('📋 Request Number:', data.requestNumber);
+        console.log('📋 Request Type:', data.requestType);
+        
+        setRequestNumber(data.requestNumber);
+        setRequestType(data.requestType);
+        setNeedsApproval(true);
+        
+        toast.success(data.message || "Cadastro enviado para aprovação!");
+        return true;
+      }
+
+      // Fluxo antigo - aprovação direta
       // Armazenar franchiseeId para futuras submissões de unidades
       if (data.franchiseeId) {
         console.log('💾 Armazenando franchiseeId:', data.franchiseeId);
@@ -647,6 +667,10 @@ export const useOnboardingForm = () => {
     linkExistingUnit,
     isSubmitting,
     franchiseeId,
-    setExistingFranchisee
+    setExistingFranchisee,
+    // Novos retornos para sistema de aprovação
+    requestNumber,
+    requestType,
+    needsApproval,
   };
 };
