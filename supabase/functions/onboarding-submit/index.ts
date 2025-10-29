@@ -188,7 +188,7 @@ serve(async (req) => {
       const { data: pendingDuplicate } = await supabaseAdmin
         .from('onboarding_requests')
         .select('id, request_number, status')
-        .or(`franchisee_cpf.eq.${formData.cpf_rnm},unit_cnpj.eq.${formData.group_code}`)
+        .or(`franchisee_cpf.eq.${formData.cpf_rnm},unit_cnpj.eq.${formData.cnpj}`)
         .in('status', ['pending', 'processing'])
         .limit(1)
         .maybeSingle();
@@ -257,7 +257,7 @@ serve(async (req) => {
       };
       
       // 7. Inserir request na tabela de aprovação
-      console.log('� Criando request de aprovação...');
+      console.log('📋 Criando request de aprovação...');
       const { data: newRequest, error: insertError } = await supabaseAdmin
         .from('onboarding_requests')
         .insert({
@@ -265,7 +265,7 @@ serve(async (req) => {
           form_data: completeFormData,
           franchisee_cpf: formData.cpf_rnm,
           franchisee_email: formData.franchisee_email || null,
-          unit_cnpj: formData.group_code.toString(),
+          unit_cnpj: formData.cnpj || null,
           franchisee_exists: !!existingFranchisee,
           franchisee_id: existingFranchisee?.id || null,
           unit_exists: !!existingUnit,
@@ -385,7 +385,7 @@ serve(async (req) => {
       const { data: pendingDuplicate } = await supabaseAdmin
         .from('onboarding_requests')
         .select('id, request_number, status')
-        .eq('unit_cnpj', formData.group_code.toString())
+        .eq('unit_cnpj', formData.cnpj)
         .in('status', ['pending', 'processing'])
         .limit(1)
         .maybeSingle();
@@ -420,7 +420,7 @@ serve(async (req) => {
           form_data: completeFormData,
           franchisee_cpf: null,
           franchisee_email: null,
-          unit_cnpj: formData.group_code.toString(),
+          unit_cnpj: formData.cnpj || null,
           franchisee_exists: true,
           franchisee_id: formData.franchiseeId,
           unit_exists: !!existingUnit,
