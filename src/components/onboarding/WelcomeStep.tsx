@@ -1,13 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface WelcomeStepProps {
   onNext: () => void;
 }
 
 export const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
+  const navigate = useNavigate();
+
+  const handleCheckStatus = () => {
+    navigate('/check-status');
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <Card>
@@ -28,9 +35,22 @@ export const WelcomeStep = ({ onNext }: WelcomeStepProps) => {
               Ele não deve ser preenchido por funcionários da unidade.
             </AlertDescription>
           </Alert>
-          <Button onClick={onNext} className="w-full" size="lg">
-            Iniciar Cadastro
-          </Button>
+          
+          <div className="space-y-3">
+            <Button onClick={onNext} className="w-full" size="lg">
+              Iniciar Cadastro
+            </Button>
+            
+            <Button 
+              onClick={handleCheckStatus} 
+              variant="outline" 
+              className="w-full gap-2" 
+              size="lg"
+            >
+              <Search className="h-4 w-4" />
+              Consultar Protocolo
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

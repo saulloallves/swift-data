@@ -11,6 +11,38 @@ function cleanPhoneNumber(phone: string): string {
   return phone.replace(/\D/g, '');
 }
 
+// Função para gerar número de protocolo
+async function generateRequestNumber(supabaseAdmin: any): Promise<string> {
+  const year = new Date().getFullYear();
+  const prefix = `ONB-${year}-`;
+  
+  // Buscar último número do ano
+  const { data: lastRequest } = await supabaseAdmin
+    .from('onboarding_requests')
+    .select('request_number')
+    .like('request_number', `${prefix}%`)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  let nextNumber = 1;
+  if (lastRequest) {
+    const lastNumber = parseInt(lastRequest.request_number.split('-')[2]);
+    nextNumber = lastNumber + 1;
+  }
+  
+  return `${prefix}${nextNumber.toString().padStart(5, '0')}`;
+}
+
+// Função para extrair IP do request
+function getClientIP(req: Request): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.headers.get('x-real-ip') || 'unknown';
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -50,7 +82,7 @@ serve(async (req) => {
 
     // ==================== SUBMIT FORM ====================
     if (action === 'submitForm') {
-      console.log('📝 Processando submitForm');
+      console.log('📝 Processando submitForm com sistema de aprovação');
       
       // Validações básicas
       if (!formData.cpf_rnm || !formData.full_name) {
@@ -61,118 +93,6 @@ serve(async (req) => {
             error: 'CPF e nome completo são obrigatórios' 
           }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Verificar se é vinculação de unidade existente
-      if (formData._linking_existing_unit && formData._existing_unit_id) {
-        console.log('🔗 Fluxo de vinculação de unidade existente detectado');
-        console.log('🎯 Unit ID:', formData._existing_unit_id);
-        
-        // Chamar lógica de linkExistingUnit
-        const franchiseeData = {
-          cpf_rnm: formData.cpf_rnm,
-          full_name: formData.full_name,
-          birth_date: formData.birth_date || null,
-          email: formData.franchisee_email || null,
-          contact: cleanPhoneNumber(formData.contact),
-          nationality: formData.nationality || null,
-          owner_type: formData.owner_type,
-          education: formData.education || null,
-          previous_profession: formData.previous_profession || null,
-          previous_salary_range: formData.previous_salary_range || null,
-          was_entrepreneur: formData.was_entrepreneur,
-          availability: formData.availability || null,
-          discovery_source: formData.discovery_source || null,
-          was_referred: formData.was_referred,
-          referrer_name: formData.referrer_name || null,
-          referrer_unit_code: formData.referrer_unit_code || null,
-          has_other_activities: formData.has_other_activities,
-          other_activities_description: formData.other_activities_description || null,
-          receives_prolabore: formData.receives_prolabore,
-          prolabore_value: formData.prolabore_value || null,
-          profile_image: formData.profile_image || null,
-          instagram: formData.instagram || null,
-          address: formData.franchisee_address || null,
-          number_address: formData.franchisee_number_address || null,
-          address_complement: formData.franchisee_address_complement || null,
-          neighborhood: formData.franchisee_neighborhood || null,
-          city: formData.franchisee_city || null,
-          state: formData.franchisee_state || null,
-          uf: formData.franchisee_uf || null,
-          postal_code: formData.franchisee_postal_code || null,
-          lgpd_term_accepted: true,
-          confidentiality_term_accepted: true,
-          system_term_accepted: true,
-        };
-
-        const franchiseeResult = await supabaseAdmin
-          .from('franqueados')
-          .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
-          .select('id')
-          .single();
-
-        if (franchiseeResult.error) {
-          console.error('❌ Erro ao salvar franqueado:', franchiseeResult.error);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: `Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}` 
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        const franchiseeId = franchiseeResult.data.id;
-        console.log('✅ Franqueado salvo com ID:', franchiseeId);
-
-        // Verificar se já existe vinculação
-        const { data: existingRelation } = await supabaseAdmin
-          .from('franqueados_unidades')
-          .select('id')
-          .eq('unidade_id', formData._existing_unit_id)
-          .eq('franqueado_id', franchiseeId)
-          .maybeSingle();
-
-        if (existingRelation) {
-          console.log('⚠️ Franqueado já vinculado a esta unidade');
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              franchiseeId,
-              message: 'Franqueado já vinculado a esta unidade' 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        // Criar vinculação
-        const { error: insertError } = await supabaseAdmin
-          .from('franqueados_unidades')
-          .insert({ 
-            franqueado_id: franchiseeId, 
-            unidade_id: formData._existing_unit_id 
-          });
-
-        if (insertError) {
-          console.error('❌ Erro ao criar vinculação:', insertError);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: `Erro ao vincular franqueado à unidade: ${insertError.message}` 
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        console.log('✅ Vinculação criada com sucesso');
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            franchiseeId,
-            message: 'Franqueado vinculado à unidade com sucesso' 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -245,155 +165,137 @@ serve(async (req) => {
         );
       }
 
-      // Preparar dados do franqueado
-      const franchiseeData = {
-        cpf_rnm: formData.cpf_rnm,
-        full_name: formData.full_name,
-        birth_date: formData.birth_date || null,
-        email: formData.franchisee_email || null,
-        contact: cleanPhoneNumber(formData.contact),
-        nationality: formData.nationality || null,
-        owner_type: formData.owner_type,
-        education: formData.education || null,
-        previous_profession: formData.previous_profession || null,
-        previous_salary_range: formData.previous_salary_range || null,
-        was_entrepreneur: formData.was_entrepreneur,
-        availability: formData.availability || null,
-        discovery_source: formData.discovery_source || null,
-        was_referred: formData.was_referred,
-        referrer_name: formData.referrer_name || null,
-        referrer_unit_code: formData.referrer_unit_code || null,
-        has_other_activities: formData.has_other_activities,
-        other_activities_description: formData.other_activities_description || null,
-        receives_prolabore: formData.receives_prolabore,
-        prolabore_value: formData.prolabore_value || null,
-        profile_image: formData.profile_image || null,
-        instagram: formData.instagram || null,
-        address: formData.franchisee_address || null,
-        number_address: formData.franchisee_number_address || null,
-        address_complement: formData.franchisee_address_complement || null,
-        neighborhood: formData.franchisee_neighborhood || null,
-        city: formData.franchisee_city || null,
-        state: formData.franchisee_state || null,
-        uf: formData.franchisee_uf || null,
-        postal_code: formData.franchisee_postal_code || null,
-        system_term_accepted: formData.system_term_accepted,
-        confidentiality_term_accepted: formData.confidentiality_term_accepted,
-        lgpd_term_accepted: formData.lgpd_term_accepted,
-        is_in_contract: false,
-        is_active_system: true,
-      };
-
-      // Preparar dados da unidade
-      const unitData = {
-        cnpj: formData.cnpj || null,
-        fantasy_name: formData.fantasy_name || null,
-        group_name: formData.group_name,
-        group_code: formData.group_code,
-        store_model: formData.store_model,
-        store_phase: formData.store_phase,
-        store_imp_phase: formData.store_imp_phase || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        instagram_profile: formData.instagram_profile || null,
-        has_parking: formData.has_parking,
-        parking_spots: formData.parking_spots || null,
-        has_partner_parking: formData.has_partner_parking,
-        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
-        purchases_active: formData.purchases_active,
-        sales_active: formData.sales_active,
-        address: formData.unit_address || null,
-        number_address: formData.unit_number_address || null,
-        address_complement: formData.unit_address_complement || null,
-        neighborhood: formData.unit_neighborhood || null,
-        city: formData.unit_city || null,
-        state: formData.unit_state || null,
-        uf: formData.unit_uf || null,
-        postal_code: formData.unit_postal_code || null,
-        operation_mon: formData.operation_mon || null,
-        operation_tue: formData.operation_tue || null,
-        operation_wed: formData.operation_wed || null,
-        operation_thu: formData.operation_thu || null,
-        operation_fri: formData.operation_fri || null,
-        operation_sat: formData.operation_sat || null,
-        operation_sun: formData.operation_sun || null,
-        operation_hol: formData.operation_hol || null,
-        is_active: true,
-      };
-
-      console.log('💾 Salvando franqueado...');
-      const franchiseeResult = await supabaseAdmin
+      // ===== INÍCIO DO SISTEMA DE APROVAÇÃO =====
+      
+      // 1. Verificar se franqueado existe (CPF)
+      console.log('🔍 Verificando se franqueado já existe...');
+      const { data: existingFranchisee } = await supabaseAdmin
         .from('franqueados')
-        .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
-        .select('id')
-        .single();
-
-      if (franchiseeResult.error) {
-        console.error('❌ Erro ao salvar franqueado:', franchiseeResult.error);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}` 
-          }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const franchiseeId = franchiseeResult.data.id;
-      console.log('✅ Franqueado salvo com ID:', franchiseeId);
-
-      console.log('💾 Salvando unidade...');
-      const unitResult = await supabaseAdmin
+        .select('id, cpf_rnm, full_name, email')
+        .eq('cpf_rnm', formData.cpf_rnm)
+        .maybeSingle();
+      
+      // 2. Verificar se unidade existe (group_code)
+      console.log('🔍 Verificando se unidade já existe...');
+      const { data: existingUnit } = await supabaseAdmin
         .from('unidades')
-        .upsert(unitData, { onConflict: 'group_code' })
-        .select('id')
-        .single();
-
-      if (unitResult.error) {
-        console.error('❌ Erro ao salvar unidade:', unitResult.error);
+        .select('id, group_code, group_name, cnpj')
+        .eq('group_code', formData.group_code)
+        .maybeSingle();
+      
+      // 3. Verificar duplicidade em requests pendentes
+      console.log('🔍 Verificando requests pendentes duplicados...');
+      const { data: pendingDuplicate } = await supabaseAdmin
+        .from('onboarding_requests')
+        .select('id, request_number, status')
+        .or(`franchisee_cpf.eq.${formData.cpf_rnm},unit_cnpj.eq.${formData.cnpj}`)
+        .in('status', ['pending', 'processing'])
+        .limit(1)
+        .maybeSingle();
+      
+      if (pendingDuplicate) {
+        console.log('⚠️ Request pendente duplicado encontrado:', pendingDuplicate.request_number);
         return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Erro ao salvar dados da unidade: ${unitResult.error.message}` 
+          JSON.stringify({
+            success: false,
+            error: 'Já existe um cadastro pendente com estes dados',
+            existingRequest: pendingDuplicate.request_number,
+            status: pendingDuplicate.status
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      const unitId = unitResult.data.id;
-      console.log('✅ Unidade salva com ID:', unitId);
-
-      console.log('🔗 Criando vinculação franqueado-unidade...');
-      const relationshipResult = await supabaseAdmin
-        .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: franchiseeId, 
-          unidade_id: unitId 
-        });
-
-      if (relationshipResult.error) {
-        console.error('❌ Erro ao criar vinculação:', relationshipResult.error);
-        // Se o relacionamento já existe, não é erro crítico
-        if (relationshipResult.error.code !== '23505') {
+      
+      // 4. Determinar tipo de request
+      let requestType: string;
+      if (!existingFranchisee && !existingUnit) {
+        requestType = 'new_franchisee_new_unit';
+        console.log('📋 Tipo de cadastro: Novo franqueado + Nova unidade');
+      } else if (existingFranchisee && !existingUnit) {
+        requestType = 'existing_franchisee_new_unit';
+        console.log('📋 Tipo de cadastro: Franqueado existente + Nova unidade');
+      } else if (!existingFranchisee && existingUnit) {
+        requestType = 'new_franchisee_existing_unit';
+        console.log('📋 Tipo de cadastro: Novo franqueado + Unidade existente');
+      } else {
+        // Ambos existem - verificar se já estão vinculados
+        console.log('� Franqueado e unidade já existem. Verificando vinculação...');
+        const { data: existingRelation } = await supabaseAdmin
+          .from('franqueados_unidades')
+          .select('id')
+          .eq('franqueado_id', existingFranchisee.id)
+          .eq('unidade_id', existingUnit.id)
+          .maybeSingle();
+        
+        if (existingRelation) {
+          console.log('❌ Franqueado já vinculado a esta unidade');
           return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: `Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}` 
+            JSON.stringify({
+              success: false,
+              error: 'Franqueado já está vinculado a esta unidade',
+              franchiseeId: existingFranchisee.id,
+              unitId: existingUnit.id
             }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
+        
+        // Se não estão vinculados, criar request para vinculação
+        requestType = 'existing_franchisee_new_unit';
+        console.log('� Tipo de cadastro: Vinculação de franqueado existente a unidade existente');
       }
-
-      console.log('✅ Vinculação criada com sucesso');
-      console.log('🎉 Cadastro completo!');
       
+      // 5. Gerar número de protocolo
+      console.log('🔢 Gerando número de protocolo...');
+      const requestNumber = await generateRequestNumber(supabaseAdmin);
+      console.log('✅ Protocolo gerado:', requestNumber);
+      
+      // 6. Preparar dados completos do formulário
+      const completeFormData = {
+        ...formData,
+        contact: cleanPhoneNumber(formData.contact),
+      };
+      
+      // 7. Inserir request na tabela de aprovação
+      console.log('📋 Criando request de aprovação...');
+      const { data: newRequest, error: insertError } = await supabaseAdmin
+        .from('onboarding_requests')
+        .insert({
+          request_number: requestNumber,
+          form_data: completeFormData,
+          franchisee_cpf: formData.cpf_rnm,
+          franchisee_email: formData.franchisee_email || null,
+          unit_cnpj: formData.cnpj || null,
+          franchisee_exists: !!existingFranchisee,
+          franchisee_id: existingFranchisee?.id || null,
+          unit_exists: !!existingUnit,
+          unit_id: existingUnit?.id || null,
+          status: 'pending',
+          request_type: requestType,
+          ip_address: getClientIP(req),
+          user_agent: req.headers.get('user-agent') || null
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('❌ Erro ao criar request:', insertError);
+        throw insertError;
+      }
+      
+      console.log('✅ Request criado com sucesso! ID:', newRequest.id);
+      
+      // 8. Retornar sucesso com número de protocolo
+      console.log('🎉 Cadastro enviado para aprovação com sucesso!');
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          franchiseeId,
-          unitId,
-          message: 'Cadastro realizado com sucesso' 
+          success: true,
+          requestId: newRequest.id,
+          requestNumber: requestNumber,
+          requestType: requestType,
+          message: 'Cadastro enviado para aprovação com sucesso!',
+          needsApproval: true,
+          estimatedTime: '2 dias úteis'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -401,7 +303,7 @@ serve(async (req) => {
 
     // ==================== SUBMIT NEW UNIT ====================
     if (action === 'submitNewUnit') {
-      console.log('📝 Processando submitNewUnit');
+      console.log('📝 Processando submitNewUnit com sistema de aprovação');
       
       if (!formData.franchiseeId) {
         console.error('❌ ID do franqueado ausente');
@@ -469,94 +371,84 @@ serve(async (req) => {
         );
       }
 
-      // Preparar dados da unidade
-      const unitData = {
-        cnpj: formData.cnpj || null,
-        fantasy_name: formData.fantasy_name || null,
-        group_name: formData.group_name,
-        group_code: formData.group_code,
-        store_model: formData.store_model,
-        store_phase: formData.store_phase,
-        store_imp_phase: formData.store_imp_phase || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        instagram_profile: formData.instagram_profile || null,
-        has_parking: formData.has_parking,
-        parking_spots: formData.parking_spots || null,
-        has_partner_parking: formData.has_partner_parking,
-        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
-        purchases_active: formData.purchases_active,
-        sales_active: formData.sales_active,
-        address: formData.unit_address || null,
-        number_address: formData.unit_number_address || null,
-        address_complement: formData.unit_address_complement || null,
-        neighborhood: formData.unit_neighborhood || null,
-        city: formData.unit_city || null,
-        state: formData.unit_state || null,
-        uf: formData.unit_uf || null,
-        postal_code: formData.unit_postal_code || null,
-        operation_mon: formData.operation_mon || null,
-        operation_tue: formData.operation_tue || null,
-        operation_wed: formData.operation_wed || null,
-        operation_thu: formData.operation_thu || null,
-        operation_fri: formData.operation_fri || null,
-        operation_sat: formData.operation_sat || null,
-        operation_sun: formData.operation_sun || null,
-        operation_hol: formData.operation_hol || null,
-        is_active: true,
-      };
-
-      console.log('💾 Salvando nova unidade...');
-      const unitResult = await supabaseAdmin
+      // ===== SISTEMA DE APROVAÇÃO PARA NOVA UNIDADE =====
+      
+      // Verificar se unidade já existe no banco principal
+      console.log('🔍 Verificando se unidade já existe...');
+      const { data: existingUnit } = await supabaseAdmin
         .from('unidades')
-        .upsert(unitData, { onConflict: 'group_code' })
-        .select('id')
-        .single();
-
-      if (unitResult.error) {
-        console.error('❌ Erro ao salvar unidade:', unitResult.error);
+        .select('id, group_code')
+        .eq('group_code', formData.group_code)
+        .maybeSingle();
+      
+      // Verificar requests pendentes
+      const { data: pendingDuplicate } = await supabaseAdmin
+        .from('onboarding_requests')
+        .select('id, request_number, status')
+        .eq('unit_cnpj', formData.cnpj)
+        .in('status', ['pending', 'processing'])
+        .limit(1)
+        .maybeSingle();
+      
+      if (pendingDuplicate) {
+        console.log('⚠️ Request pendente duplicado encontrado');
         return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Erro ao salvar dados da unidade: ${unitResult.error.message}` 
+          JSON.stringify({
+            success: false,
+            error: 'Já existe um cadastro pendente para esta unidade',
+            existingRequest: pendingDuplicate.request_number
           }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      const unitId = unitResult.data.id;
-      console.log('✅ Unidade salva com ID:', unitId);
-
-      console.log('🔗 Criando vinculação franqueado-unidade...');
-      const relationshipResult = await supabaseAdmin
-        .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: formData.franchiseeId, 
-          unidade_id: unitId 
-        });
-
-      if (relationshipResult.error) {
-        console.error('❌ Erro ao criar vinculação:', relationshipResult.error);
-        // Se o relacionamento já existe, não é erro crítico
-        if (relationshipResult.error.code !== '23505') {
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: `Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}` 
-            }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
+      
+      // Gerar protocolo
+      const requestNumber = await generateRequestNumber(supabaseAdmin);
+      console.log('✅ Protocolo gerado:', requestNumber);
+      
+      // Preparar dados
+      const completeFormData = {
+        ...formData,
+        franchiseeId: formData.franchiseeId,
+      };
+      
+      // Criar request
+      const { data: newRequest, error: insertError } = await supabaseAdmin
+        .from('onboarding_requests')
+        .insert({
+          request_number: requestNumber,
+          form_data: completeFormData,
+          franchisee_cpf: null,
+          franchisee_email: null,
+          unit_cnpj: formData.cnpj || null,
+          franchisee_exists: true,
+          franchisee_id: formData.franchiseeId,
+          unit_exists: !!existingUnit,
+          unit_id: existingUnit?.id || null,
+          status: 'pending',
+          request_type: 'existing_franchisee_new_unit',
+          ip_address: getClientIP(req),
+          user_agent: req.headers.get('user-agent') || null
+        })
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('❌ Erro ao criar request:', insertError);
+        throw insertError;
       }
-
-      console.log('✅ Vinculação criada com sucesso');
-      console.log('🎉 Nova unidade cadastrada!');
+      
+      console.log('✅ Request de nova unidade criado com sucesso!');
       
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          unitId,
-          message: 'Nova unidade cadastrada com sucesso' 
+          success: true,
+          requestId: newRequest.id,
+          requestNumber: requestNumber,
+          requestType: 'existing_franchisee_new_unit',
+          message: 'Nova unidade enviada para aprovação com sucesso!',
+          needsApproval: true,
+          estimatedTime: '2 dias úteis'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

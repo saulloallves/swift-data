@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Terms from "./pages/Terms";
 import TestWebhook from "./pages/TestWebhook";
 import TestOnboarding from "./pages/TestOnboarding";
+import { CheckStatus } from "./pages/CheckStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/terms/:termType" element={<Terms />} />
+          <Route path="/check-status" element={<CheckStatus />} />
           <Route path="/test-webhook" element={<TestWebhook />} />
           <Route path="/test-onboarding" element={<TestOnboarding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
