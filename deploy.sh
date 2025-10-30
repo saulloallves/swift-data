@@ -73,7 +73,7 @@ docker-compose logs --tail=20
 
 # Passo 7: Testar aplicação
 print_msg "Testando aplicação..."
-if curl -f http://localhost:3000/health > /dev/null 2>&1; then
+if curl -f http://localhost:3001/health > /dev/null 2>&1; then
     print_msg "✅ Aplicação respondendo no healthcheck!"
 else
     print_warning "⚠️ Healthcheck não respondeu, mas container está rodando"
@@ -84,7 +84,7 @@ print_msg "================================================"
 print_msg "✨ Deploy concluído com sucesso!"
 print_msg "================================================"
 print_msg "📦 Container: cadastro-girabot"
-print_msg "🌐 URL Local: http://localhost:3000"
+print_msg "🌐 URL Local: http://localhost:3001"
 print_msg "🌐 URL Pública: https://cadastro.girabot.com.br"
 print_msg "================================================"
 echo ""

@@ -111,7 +111,7 @@ docker-compose ps
 docker-compose logs -f
 
 # Verificar healthcheck
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ---
@@ -139,7 +139,7 @@ server {
     
     # Proxy para o container Docker
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         
         proxy_set_header Host $host;
@@ -154,7 +154,7 @@ server {
     
     location /health {
         access_log off;
-        proxy_pass http://localhost:3000/health;
+        proxy_pass http://localhost:3001/health;
     }
 }
 ```
@@ -317,7 +317,7 @@ docker-compose ps
 docker stats cadastro-girabot
 
 # Healthcheck
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 curl https://cadastro.girabot.com.br/health
 ```
 
@@ -358,7 +358,7 @@ docker-compose build --no-cache
 docker-compose ps
 
 # Verificar se porta 3000 está aberta
-curl http://localhost:3000
+curl http://localhost:3001
 
 # Ver logs do Nginx
 sudo tail -f /var/log/nginx/cadastro-girabot-error.log
@@ -495,7 +495,7 @@ Em caso de problemas:
 
 1. Verificar logs: `docker-compose logs -f`
 2. Verificar status: `docker-compose ps`
-3. Testar healthcheck: `curl http://localhost:3000/health`
+3. Testar healthcheck: `curl http://localhost:3001/health`
 4. Verificar Nginx: `sudo nginx -t`
 5. Ver logs Nginx: `sudo tail -f /var/log/nginx/cadastro-girabot-error.log`
 
@@ -505,7 +505,7 @@ Em caso de problemas:
 
 - **Produção**: https://cadastro.girabot.com.br
 - **Healthcheck**: https://cadastro.girabot.com.br/health
-- **Container**: http://localhost:3000
+- **Container**: http://localhost:3001
 
 ---
 

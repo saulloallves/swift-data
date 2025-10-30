@@ -46,7 +46,7 @@ status: ## Mostra status dos containers
 health: ## Verifica health do container
 	@echo "$(GREEN)Checking health...$(NC)"
 	@sleep 5
-	@if curl -f http://localhost:3000/health > /dev/null 2>&1; then \
+	@if curl -f http://localhost:3001/health > /dev/null 2>&1; then \
 		echo "$(GREEN)✅ Application is healthy!$(NC)"; \
 	else \
 		echo "$(RED)❌ Application is not responding$(NC)"; \
@@ -71,12 +71,12 @@ shell: ## Acessa shell do container
 
 test: ## Testa a aplicação
 	@echo "$(GREEN)Testing application...$(NC)"
-	@if curl -f http://localhost:3000/ > /dev/null 2>&1; then \
+	@if curl -f http://localhost:3001/ > /dev/null 2>&1; then \
 		echo "$(GREEN)✅ Homepage is accessible$(NC)"; \
 	else \
 		echo "$(RED)❌ Homepage is not accessible$(NC)"; \
 	fi
-	@if curl -f http://localhost:3000/health > /dev/null 2>&1; then \
+	@if curl -f http://localhost:3001/health > /dev/null 2>&1; then \
 		echo "$(GREEN)✅ Health endpoint is accessible$(NC)"; \
 	else \
 		echo "$(RED)❌ Health endpoint is not accessible$(NC)"; \

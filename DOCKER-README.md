@@ -88,7 +88,7 @@ docker-compose up -d
 docker-compose ps
 
 # Healthcheck
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 ```
 
 ## Makefile (se disponível)
@@ -104,7 +104,7 @@ make clean     # Limpar
 ## URLs
 
 - **Produção**: https://cadastro.girabot.com.br
-- **Local**: http://localhost:3000
+- **Local**: http://localhost:3001
 - **Health**: /health
 
 ## Troubleshooting
@@ -115,7 +115,7 @@ docker-compose logs
 
 # 502 Bad Gateway
 docker-compose ps
-curl http://localhost:3000
+curl http://localhost:3001
 
 # Porta ocupada
 sudo lsof -i :3000
