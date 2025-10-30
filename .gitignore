@@ -22,10 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Ignorar apenas nginx.conf específicos (não os do docker)
-# *.conf
-
-# Permitir arquivos Docker
-# Dockerfile
-# *.yml
+Dockerfile
+*.yml
+*.sh
+*.conf
+Makefile
+.github/
+.env
