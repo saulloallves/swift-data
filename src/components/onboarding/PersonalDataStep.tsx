@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -377,11 +378,11 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="franchisee_email">E-mail *</Label>
+          <Label htmlFor="franchisee_email">E-mail Pessoal *</Label>
           <Input
             id="franchisee_email"
             type="email"
-            placeholder="e-mail pessoal"
+            placeholder="seu@email.com"
             value={data.franchisee_email}
             onChange={(e) => onUpdate({ franchisee_email: e.target.value })}
             className={invalidFields.includes("E-mail") ? "border-destructive border-2" : ""}
@@ -389,7 +390,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contact">Telefone/Contato *</Label>
+          <Label htmlFor="contact">WhatsApp *</Label>
           <div className="relative">
             <Input
               id="contact"
@@ -405,7 +406,7 @@ export const PersonalDataStep = ({ data, onUpdate, onNext, onStartNewUnitFlow }:
                 handlePhoneValidation(cleaned);
               }}
               maxLength={15}
-              className={`${isLoadingPhone ? "api-loading" : ""} ${invalidFields.includes("Telefone/Contato") ? "border-destructive border-2" : ""}`}
+              className={`${isLoadingPhone ? "api-loading" : ""} ${invalidFields.includes("WhatsApp") ? "border-destructive border-2" : ""}`}
               disabled={cpfAlreadyExists}
             />
             {isLoadingPhone && (

@@ -8,6 +8,9 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Font Stack */
+    --font-sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
     /* Cresci e Perdi Color Palette */
     --background: 0 0% 100%;
     --foreground: 28 64% 13%;
@@ -106,8 +109,22 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  
+  /* Garantir aplicação em todos os elementos de formulário */
+  input,
+  textarea,
+  select,
+  button,
+  optgroup {
+    font-family: var(--font-sans);
   }
 }
 
