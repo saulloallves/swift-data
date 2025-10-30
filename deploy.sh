@@ -33,14 +33,22 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker compose &> /dev/null; then
+# Verificar se Docker Compose está instalado (V2 ou V1)
+DOCKER_COMPOSE_CMD=""
+if command -v docker &> /dev/null && docker compose version &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+    print_msg "Usando Docker Compose V2 (plugin)"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+    print_msg "Usando Docker Compose V1 (standalone)"
+else
     print_error "Docker Compose não está instalado!"
     exit 1
 fi
 
 # Passo 1: Parar containers antigos
 print_msg "Parando containers antigos..."
-docker-compose down || true
+$DOCKER_COMPOSE_CMD down || true
 
 # Passo 2: Limpar imagens antigas
 print_msg "Limpando imagens antigas..."
@@ -48,11 +56,11 @@ docker image prune -f || true
 
 # Passo 3: Build da nova imagem
 print_msg "Buildando nova imagem..."
-docker-compose build --no-cache
+$DOCKER_COMPOSE_CMD build --no-cache
 
 # Passo 4: Iniciar containers
 print_msg "Iniciando containers..."
-docker-compose up -d
+$DOCKER_COMPOSE_CMD up -d
 
 # Passo 5: Aguardar healthcheck
 print_msg "Aguardando healthcheck..."
@@ -63,13 +71,13 @@ if docker ps | grep -q "cadastro-girabot"; then
     print_msg "✅ Container está rodando!"
 else
     print_error "❌ Container não está rodando!"
-    docker-compose logs
+    $DOCKER_COMPOSE_CMD logs
     exit 1
 fi
 
 # Passo 6: Verificar logs
 print_msg "Últimas linhas do log:"
-docker-compose logs --tail=20
+$DOCKER_COMPOSE_CMD logs --tail=20
 
 # Passo 7: Testar aplicação
 print_msg "Testando aplicação..."
@@ -89,8 +97,8 @@ print_msg "🌐 URL Pública: https://cadastro.girabot.com.br"
 print_msg "================================================"
 echo ""
 print_msg "Comandos úteis:"
-echo "  - Ver logs:        docker-compose logs -f"
-echo "  - Parar:          docker-compose down"
-echo "  - Reiniciar:      docker-compose restart"
-echo "  - Status:         docker-compose ps"
+echo "  - Ver logs:        $DOCKER_COMPOSE_CMD logs -f"
+echo "  - Parar:          $DOCKER_COMPOSE_CMD down"
+echo "  - Reiniciar:      $DOCKER_COMPOSE_CMD restart"
+echo "  - Status:         $DOCKER_COMPOSE_CMD ps"
 echo ""
