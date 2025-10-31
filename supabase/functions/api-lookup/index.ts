@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,7 @@ const corsHeaders = {
 };
 
 interface LookupRequest {
-  type: 'cpf' | 'cnpj' | 'cep';
+  type: 'cpf' | 'cnpj' | 'cep' | 'check-cnpj-exists';
   value: string;
 }
 
@@ -33,6 +34,9 @@ serve(async (req) => {
       case 'cep':
         result = await lookupCep(value);
         break;
+      case 'check-cnpj-exists':
+        result = await checkCnpjExists(value);
+        break;
       default:
         throw new Error('Invalid lookup type');
     }
@@ -42,16 +46,84 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in api-lookup function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Internal server error' 
+        error: errorMessage
       }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+async function checkCnpjExists(cnpj: string) {
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // 1. Find the unit by CNPJ
+    const { data: unit, error: unitError } = await supabaseAdmin
+      .from('unidades')
+      .select('id, fantasy_name, group_code, group_name, cnpj')
+      .eq('cnpj', cnpj)
+      .maybeSingle();
+
+    if (unitError) throw unitError;
+
+    if (!unit) {
+      return { exists: false };
+    }
+
+    // 2. Find the associated franchisee
+    let franchiseeName = 'Franqueado não encontrado';
+    const { data: relation, error: relationError } = await supabaseAdmin
+      .from('franqueados_unidades')
+      .select('franqueado_id')
+      .eq('unidade_id', unit.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (relationError) {
+        console.error("Error fetching franqueado_unidades:", relationError.message);
+    }
+
+    if (relation?.franqueado_id) {
+      const { data: franchisee, error: franchiseeError } = await supabaseAdmin
+        .from('franqueados')
+        .select('full_name')
+        .eq('id', relation.franqueado_id)
+        .maybeSingle();
+      
+      if (franchiseeError) {
+          console.error("Error fetching franqueados:", franchiseeError.message);
+      }
+
+      if (franchisee) {
+        franchiseeName = franchisee.full_name;
+      }
+    }
+
+    const unitData = {
+      fantasy_name: unit.group_name || unit.fantasy_name || 'Unidade sem nome',
+      franqueado_name: franchiseeName,
+      unit_id: unit.id,
+      group_code: unit.group_code || 0,
+      group_name: unit.group_name || '',
+      cnpj: unit.cnpj || cnpj
+    };
+
+    return { exists: true, unitData };
+
+  } catch (error) {
+    console.error('Error in checkCnpjExists:', error);
+    return { exists: false, error: error.message };
+  }
+}
+
 
 async function lookupCpf(cpf: string) {
   const hubdevApiKey = Deno.env.get('HUBDEV_API_KEY');
@@ -68,6 +140,9 @@ async function lookupCpf(cpf: string) {
     };
   }
 
+  const startTime = Date.now();
+  console.log(`⏱️ [${new Date().toISOString()}] Iniciando consulta HubDev API para CPF: ${cpf}`);
+
   try {
     // Get current date in DD/MM/YYYY format for the 'data' parameter
     const currentDate = new Date().toLocaleDateString('pt-BR');
@@ -77,20 +152,30 @@ async function lookupCpf(cpf: string) {
     
     console.log(`Calling HUBDev API: ${url.replace(hubdevApiKey, '[TOKEN_HIDDEN]')}`);
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Lovable-API-Client/1.0',
-      },
-    });
+    // Criar AbortController com timeout de 10 segundos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      throw new Error(`HubDev API HTTP error: ${response.status}`);
-    }
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Lovable-API-Client/1.0',
+        },
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    
-    console.log('HubDev API response:', JSON.stringify(data, null, 2));
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HubDev API HTTP error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [${new Date().toISOString()}] Resposta HubDev recebida em ${duration}ms`);
+      console.log('HubDev API response:', JSON.stringify(data, null, 2));
     
     // Check if the API returned success
     if (data.return === "OK" && data.result) {
@@ -121,8 +206,22 @@ async function lookupCpf(cpf: string) {
         error: 'CPF não encontrado na base da Receita Federal'
       };
     }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        const duration = Date.now() - startTime;
+        console.error(`⏱️ [${new Date().toISOString()}] Timeout na consulta HubDev API após ${duration}ms`);
+        return {
+          success: false,
+          error: 'Tempo esgotado ao consultar CPF. Tente novamente ou preencha manualmente.'
+        };
+      }
+      throw fetchError;
+    }
   } catch (error) {
-    console.error('CPF lookup error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`❌ [${new Date().toISOString()}] Erro na consulta CPF após ${duration}ms:`, error);
     return {
       success: false,
       error: 'Erro ao consultar CPF na base da Receita Federal'

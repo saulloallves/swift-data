@@ -1199,6 +1199,103 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_requests: {
+        Row: {
+          id: string
+          request_number: string
+          request_type: Database["public"]["Enums"]["onboarding_request_type"]
+          status: Database["public"]["Enums"]["onboarding_status"]
+          franchisee_email: string
+          form_data: Json
+          submitted_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rejection_reason: string | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          request_number: string
+          request_type: Database["public"]["Enums"]["onboarding_request_type"]
+          status?: Database["public"]["Enums"]["onboarding_status"]
+          franchisee_email: string
+          form_data: Json
+          submitted_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rejection_reason?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          request_number?: string
+          request_type?: Database["public"]["Enums"]["onboarding_request_type"]
+          status?: Database["public"]["Enums"]["onboarding_status"]
+          franchisee_email?: string
+          form_data?: Json
+          submitted_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rejection_reason?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "franqueados"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      onboarding_request_history: {
+        Row: {
+          id: string
+          request_id: string
+          previous_status: Database["public"]["Enums"]["onboarding_status"] | null
+          new_status: Database["public"]["Enums"]["onboarding_status"]
+          changed_by: string | null
+          change_reason: string | null
+          changed_at: string
+        }
+        Insert: {
+          id?: string
+          request_id: string
+          previous_status?: Database["public"]["Enums"]["onboarding_status"] | null
+          new_status: Database["public"]["Enums"]["onboarding_status"]
+          changed_by?: string | null
+          change_reason?: string | null
+          changed_at?: string
+        }
+        Update: {
+          id?: string
+          request_id?: string
+          previous_status?: Database["public"]["Enums"]["onboarding_status"] | null
+          new_status?: Database["public"]["Enums"]["onboarding_status"]
+          changed_by?: string | null
+          change_reason?: string | null
+          changed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_request_history_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_requests"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       v_franqueados_unidades_detalhes: {
@@ -1359,6 +1456,16 @@ export type Database = {
         | "Replenisher"
         | "Partner"
         | "Main"
+      onboarding_request_type:
+        | "new_franchisee_new_unit"
+        | "existing_franchisee_new_unit"
+        | "new_franchisee_existing_unit"
+      onboarding_status:
+        | "pending"
+        | "processing"
+        | "approved"
+        | "rejected"
+        | "error"
       whatsapp_group_kind_enum:
         | "main"
         | "ai"

@@ -1,4 +1,10 @@
 project_id = "zqexpclhdrbnevxheiax"
 
+[functions.onboarding-submit]
+verify_jwt = false
+
+[functions.api-lookup]
+verify_jwt = false
+
 [functions.notify-franchisee-created]
 verify_jwt = false

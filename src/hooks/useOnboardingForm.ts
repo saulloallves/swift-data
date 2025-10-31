@@ -165,6 +165,11 @@ export const useOnboardingForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [franchiseeId, setFranchiseeId] = useState<string | null>(null);
   const [existingFranchiseeId, setExistingFranchiseeId] = useState<string | null>(null);
+  
+  // Novos estados para sistema de aprovação
+  const [requestNumber, setRequestNumber] = useState<string | null>(null);
+  const [requestType, setRequestType] = useState<string | null>(null);
+  const [needsApproval, setNeedsApproval] = useState(false);
 
   const updateFormData = (updates: Partial<OnboardingFormData> | OnboardingFormData) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -253,458 +258,403 @@ export const useOnboardingForm = () => {
     }
   };
 
-  const submitForm = async (): Promise<boolean> => {
+  const submitForm = async (retryCount = 0): Promise<boolean> => {
     setIsSubmitting(true);
     
     try {
-      // Validações básicas
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO SUBMIT FORM ====================`);
+      console.log('📊 FormData completo:', JSON.stringify(formData, null, 2));
+      
+      // Validação do payload antes da invocação
       if (!formData.cpf_rnm || !formData.full_name) {
-        toast.error("CPF e nome completo são obrigatórios");
+        console.error('❌ VALIDAÇÃO FALHOU: CPF ou nome completo ausente');
+        toast.error('CPF e nome completo são obrigatórios');
         return false;
       }
 
-      // Verificar se é vinculação de unidade existente
-      if (formData._linking_existing_unit && formData._existing_unit_id) {
-        console.log('🔗 Detectado fluxo de vinculação de unidade existente');
-        console.log('🎯 ID da unidade existente:', formData._existing_unit_id);
-        
-        // Chamar linkExistingUnit diretamente
-        const success = await linkExistingUnit(formData._existing_unit_id);
-        if (success) {
-          console.log('✅ Vinculação de unidade existente concluída com sucesso!');
-          return true;
-        } else {
-          console.error('❌ Falha na vinculação de unidade existente');
-          return false;
-        }
+      // Limpar flags especiais que podem causar comportamento inesperado
+      const cleanFormData = { ...formData };
+      if (!cleanFormData._linking_existing_unit) {
+        delete cleanFormData._linking_existing_unit;
+        delete cleanFormData._existing_unit_id;
       }
 
-      // Fluxo normal - validar código de unidade nova
-      // VALIDAÇÃO CRÍTICA: Verificar se código de unidade existe na base de dados
-      if (formData.group_code) {
-        const { data: unitExists, error } = await supabase
-          .from('unidades_old' as any)
-          .select('group_code')
-          .eq('group_code', formData.group_code)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Erro ao validar código da unidade:', error);
-          toast.error("Erro ao validar código da unidade. Tente novamente.");
-          return false;
-        }
-
-        if (!unitExists) {
-          toast.error("Código de unidade inválido. Selecione uma unidade válida da lista de sugestões.");
-          return false;
-        }
-
-        console.log('✅ Código de unidade validado:', formData.group_code);
-      }
-
-      if (!formData.group_code || formData.group_code <= 0) {
-        toast.error("Código do grupo é obrigatório e deve ser maior que 0");
-        return false;
-      }
-
-      // Validar estacionamento parceiro se estiver habilitado
-      if (formData.has_partner_parking && !formData.partner_parking_address) {
-        toast.error("Endereço do estacionamento parceiro é obrigatório quando estacionamento parceiro está habilitado");
-        return false;
-      }
-
-      // Prepare franchisee data
-      const franchiseeData = {
-        cpf_rnm: formData.cpf_rnm,
-        full_name: formData.full_name,
-        birth_date: formData.birth_date || null,
-        email: formData.franchisee_email || null,
-        contact: cleanPhoneNumber(formData.contact), // Sempre salvar apenas números
-        nationality: formData.nationality || null,
-        owner_type: formData.owner_type,
-        education: formData.education || null,
-        previous_profession: formData.previous_profession || null,
-        previous_salary_range: formData.previous_salary_range || null,
-        was_entrepreneur: formData.was_entrepreneur,
-        availability: formData.availability || null,
-        discovery_source: formData.discovery_source || null,
-        was_referred: formData.was_referred,
-        referrer_name: formData.referrer_name || null,
-        referrer_unit_code: formData.referrer_unit_code || null,
-        has_other_activities: formData.has_other_activities,
-        other_activities_description: formData.other_activities_description || null,
-        receives_prolabore: formData.receives_prolabore,
-        prolabore_value: formData.prolabore_value || null,
-        profile_image: formData.profile_image || null,
-        instagram: formData.instagram || null,
-        address: formData.franchisee_address || null,
-        number_address: formData.franchisee_number_address || null,
-        address_complement: formData.franchisee_address_complement || null,
-        neighborhood: formData.franchisee_neighborhood || null,
-        city: formData.franchisee_city || null,
-        state: formData.franchisee_state || null,
-        uf: formData.franchisee_uf || null,
-        postal_code: formData.franchisee_postal_code || null,
-        system_term_accepted: formData.system_term_accepted,
-        confidentiality_term_accepted: formData.confidentiality_term_accepted,
-        lgpd_term_accepted: formData.lgpd_term_accepted,
-        is_in_contract: false,
-        is_active_system: true,
+      const payload = {
+        action: 'submitForm',
+        formData: cleanFormData
       };
 
-      // Prepare unit data
-      const unitData = {
-        cnpj: formData.cnpj || null,
-        fantasy_name: formData.fantasy_name || null,
-        group_name: formData.group_name,
-        group_code: formData.group_code,
-        store_model: formData.store_model,
-        store_phase: formData.store_phase,
-        store_imp_phase: formData.store_imp_phase || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        instagram_profile: formData.instagram_profile || null,
-        has_parking: formData.has_parking,
-        parking_spots: formData.parking_spots || null,
-        has_partner_parking: formData.has_partner_parking,
-        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
-        purchases_active: formData.purchases_active,
-        sales_active: formData.sales_active,
-        address: formData.unit_address || null,
-        number_address: formData.unit_number_address || null,
-        address_complement: formData.unit_address_complement || null,
-        neighborhood: formData.unit_neighborhood || null,
-        city: formData.unit_city || null,
-        state: formData.unit_state || null,
-        uf: formData.unit_uf || null,
-        postal_code: formData.unit_postal_code || null,
-        operation_mon: formData.operation_mon || null,
-        operation_tue: formData.operation_tue || null,
-        operation_wed: formData.operation_wed || null,
-        operation_thu: formData.operation_thu || null,
-        operation_fri: formData.operation_fri || null,
-        operation_sat: formData.operation_sat || null,
-        operation_sun: formData.operation_sun || null,
-        operation_hol: formData.operation_hol || null,
-        is_active: true,
-      };
+      console.log('🎯 Chamando Edge Function: onboarding-submit');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta da Edge Function...');
+      
+      const invokeStart = Date.now();
 
-      // Insert franchisee first
-      const franchiseeResult = await supabase
-        .from('franqueados')
-        .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
-        .select('id')
-        .single();
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
 
-      if (franchiseeResult.error) {
-        console.error('Franchisee upsert error:', franchiseeResult.error);
-        if (franchiseeResult.error.code === '23505') {
-          toast.error("CPF já cadastrado no sistema");
-        } else {
-          toast.error(`Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}`);
-        }
-        return false;
-      }
-
-      // Insert unit
-      const unitResult = await supabase
-        .from('unidades')
-        .upsert(unitData, { onConflict: 'group_code' })
-        .select('id')
-        .single();
-
-      if (unitResult.error) {
-        console.error('Unit upsert error:', unitResult.error);
-        if (unitResult.error.code === '23505') {
-          toast.error("Código do grupo já cadastrado no sistema");
-        } else {
-          toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
-        }
-        return false;
-      }
-
-      // Create the relationship in franqueados_unidades table
-      const currentFranchiseeId = franchiseeResult.data.id;
-      const unitId = unitResult.data.id;
-
-      const relationshipResult = await supabase
-        .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: currentFranchiseeId, 
-          unidade_id: unitId 
-        });
-
-      if (relationshipResult.error) {
-        console.error('Relationship insert error:', relationshipResult.error);
-        // Se o relacionamento já existe, não é um erro crítico
-        if (relationshipResult.error.code !== '23505') {
-          toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
-          return false;
-        }
-      }
-
-      // Store franchisee ID for future unit registrations
-      setFranchiseeId(currentFranchiseeId);
-
-      // Notificar n8n sobre o novo franqueado criado
-      await notifyN8n({
-        id: currentFranchiseeId,
-        cpf: formData.cpf_rnm,
-        nome: formData.full_name,
-        telefone: cleanPhoneNumber(formData.contact), // Enviar apenas números
-        codigo_unidade: String(formData.group_code)
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
       });
 
-      toast.success("Cadastro realizado com sucesso!");
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
+
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
+      if (error) {
+        console.error('❌ ERRO AO CHAMAR EDGE FUNCTION:', error);
+        console.error('  - Código:', error.code);
+        console.error('  - Mensagem:', error.message);
+        console.error('  - Detalhes:', JSON.stringify(error.details || {}));
+        
+        // Detectar erro de RLS especificamente
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO! A EDGE FUNCTION NÃO ESTÁ SENDO USADA! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS. Entre em contato com suporte técnico.', {
+            duration: 10000
+          });
+          return false;
+        }
+
+        // Retry automático em caso de erro de rede/timeout
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return submitForm(retryCount + 1);
+        }
+        
+        toast.error(`Erro ao processar cadastro: ${error.message}`);
+        return false;
+      }
+
+      if (!data.success) {
+        console.error('❌ Edge Function retornou erro:', data.error);
+        toast.error(data.error || 'Erro ao processar cadastro');
+        return false;
+      }
+
+      console.log('✅ EDGE FUNCTION EXECUTADA COM SUCESSO!');
+      console.log('📊 Dados retornados:', data);
+
+      // Verificar se é sistema de aprovação
+      if (data.needsApproval) {
+        console.log('⏳ Cadastro enviado para APROVAÇÃO');
+        console.log('📋 Request Number:', data.requestNumber);
+        console.log('📋 Request Type:', data.requestType);
+        
+        setRequestNumber(data.requestNumber);
+        setRequestType(data.requestType);
+        setNeedsApproval(true);
+        
+        toast.success(data.message || "Cadastro enviado para aprovação!");
+        return true;
+      }
+
+      // Fluxo antigo - aprovação direta
+      // Armazenar franchiseeId para futuras submissões de unidades
+      if (data.franchiseeId) {
+        console.log('💾 Armazenando franchiseeId:', data.franchiseeId);
+        setFranchiseeId(data.franchiseeId);
+      }
+
+      // Notificar n8n sobre o novo franqueado criado
+      if (data.franchiseeId) {
+        console.log('📤 Iniciando notificação ao n8n...');
+        try {
+          await notifyN8n({
+            id: data.franchiseeId,
+            cpf: formData.cpf_rnm,
+            nome: formData.full_name,
+            telefone: cleanPhoneNumber(formData.contact),
+            codigo_unidade: String(formData.group_code)
+          });
+          console.log('✅ n8n notificado com sucesso');
+        } catch (n8nError) {
+          console.error('⚠️ Erro ao notificar n8n (não-crítico):', n8nError);
+          // Não bloquear o fluxo principal se o webhook falhar
+        }
+      }
+
+      // Limpar flags especiais após sucesso
+      updateFormData({
+        _linking_existing_unit: undefined,
+        _existing_unit_id: undefined
+      });
+
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM SUBMIT FORM ====================`);
+      toast.success(data.message || "Cadastro realizado com sucesso!");
       return true;
       
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('❌ ERRO INESPERADO:', error);
+      console.error('  - Tipo:', typeof error);
+      console.error('  - Stack:', error instanceof Error ? error.stack : 'N/A');
+      
+      // Detectar se é erro de RLS mesmo em exceção
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada. Entre em contato com suporte.', {
+          duration: 10000
+        });
+        return false;
+      }
+
       toast.error("Erro inesperado ao submeter o formulário. Verifique os dados e tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Submit finalizado (isSubmitting = false)');
     }
   };
 
-  const submitNewUnit = async (): Promise<boolean> => {
+  const submitNewUnit = async (retryCount = 0): Promise<boolean> => {
     if (!franchiseeId) {
       toast.error("Erro: ID do franqueado não encontrado");
       return false;
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      // Validações básicas para nova unidade
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO SUBMIT NEW UNIT ====================`);
+      console.log('👤 FranchiseeId:', franchiseeId);
+      console.log('📊 FormData:', JSON.stringify(formData, null, 2));
+
+      // Validação do payload
       if (!formData.group_code || formData.group_code <= 0) {
-        toast.error("Código do grupo é obrigatório e deve ser maior que 0");
+        console.error('❌ VALIDAÇÃO FALHOU: Código de grupo inválido');
+        toast.error('Código da unidade é obrigatório');
         return false;
       }
 
-      // VALIDAÇÃO CRÍTICA: Verificar se código de unidade existe na base de dados
-      const { data: unitExists, error } = await supabase
-        .from('unidades_old' as any)
-        .select('group_code')
-        .eq('group_code', formData.group_code)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erro ao validar código da unidade:', error);
-        toast.error("Erro ao validar código da unidade. Tente novamente.");
-        return false;
-      }
-
-      if (!unitExists) {
-        toast.error("Código de unidade inválido. Selecione uma unidade válida da lista de sugestões.");
-        return false;
-      }
-
-      console.log('✅ Código de unidade validado para nova unidade:', formData.group_code);
-
-      // Validar estacionamento parceiro se estiver habilitado
-      if (formData.has_partner_parking && !formData.partner_parking_address) {
-        toast.error("Endereço do estacionamento parceiro é obrigatório quando estacionamento parceiro está habilitado");
-        return false;
-      }
-
-      // Prepare unit data
-      const unitData = {
-        cnpj: formData.cnpj || null,
-        fantasy_name: formData.fantasy_name || null,
-        group_name: formData.group_name,
-        group_code: formData.group_code,
-        store_model: formData.store_model,
-        store_phase: formData.store_phase,
-        store_imp_phase: formData.store_imp_phase || null,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        instagram_profile: formData.instagram_profile || null,
-        has_parking: formData.has_parking,
-        parking_spots: formData.parking_spots || null,
-        has_partner_parking: formData.has_partner_parking,
-        partner_parking_address: formData.has_partner_parking ? formData.partner_parking_address : null,
-        purchases_active: formData.purchases_active,
-        sales_active: formData.sales_active,
-        address: formData.unit_address || null,
-        number_address: formData.unit_number_address || null,
-        address_complement: formData.unit_address_complement || null,
-        neighborhood: formData.unit_neighborhood || null,
-        city: formData.unit_city || null,
-        state: formData.unit_state || null,
-        uf: formData.unit_uf || null,
-        postal_code: formData.unit_postal_code || null,
-        operation_mon: formData.operation_mon || null,
-        operation_tue: formData.operation_tue || null,
-        operation_wed: formData.operation_wed || null,
-        operation_thu: formData.operation_thu || null,
-        operation_fri: formData.operation_fri || null,
-        operation_sat: formData.operation_sat || null,
-        operation_sun: formData.operation_sun || null,
-        operation_hol: formData.operation_hol || null,
-        is_active: true,
+      const payload = {
+        action: 'submitNewUnit',
+        formData: {
+          ...formData,
+          franchiseeId
+        }
       };
 
-      // Insert new unit
-      const unitResult = await supabase
-        .from('unidades')
-        .upsert(unitData, { onConflict: 'group_code' })
-        .select('id')
-        .single();
+      console.log('🎯 Chamando Edge Function: onboarding-submit (submitNewUnit)');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta...');
 
-      if (unitResult.error) {
-        console.error('Unit upsert error:', unitResult.error);
-        if (unitResult.error.code === '23505') {
-          toast.error("Código do grupo já cadastrado no sistema");
-        } else {
-          toast.error(`Erro ao salvar dados da unidade: ${unitResult.error.message}`);
+      const invokeStart = Date.now();
+
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
+      });
+
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
+
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
+      if (error) {
+        console.error('❌ ERRO AO CHAMAR EDGE FUNCTION:', error);
+        
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO EM SUBMIT NEW UNIT! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS.', {
+            duration: 10000
+          });
+          return false;
         }
+
+        // Retry automático
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return submitNewUnit(retryCount + 1);
+        }
+
+        toast.error(`Erro ao cadastrar nova unidade: ${error.message}`);
         return false;
       }
 
-      // Create the relationship in franqueados_unidades table
-      const unitId = unitResult.data.id;
-
-      const relationshipResult = await supabase
-        .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: franchiseeId, 
-          unidade_id: unitId 
-        });
-
-      if (relationshipResult.error) {
-        console.error('Relationship insert error:', relationshipResult.error);
-        // Se o relacionamento já existe, não é um erro crítico
-        if (relationshipResult.error.code !== '23505') {
-          toast.error(`Erro ao criar vínculo franqueado-unidade: ${relationshipResult.error.message}`);
-          return false;
-        }
+      if (!data.success) {
+        console.error('❌ Edge Function retornou erro:', data.error);
+        toast.error(data.error || 'Erro ao cadastrar nova unidade');
+        return false;
       }
 
-      toast.success("Nova unidade cadastrada com sucesso!");
-      return true;
+      console.log('✅ NOVA UNIDADE CADASTRADA COM SUCESSO!');
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM SUBMIT NEW UNIT ====================`);
       
+      toast.success(data.message || "Nova unidade cadastrada com sucesso!");
+      return true;
     } catch (error) {
-      console.error('New unit submission error:', error);
+      console.error('❌ ERRO INESPERADO:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO (SUBMIT NEW UNIT)! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada.', {
+          duration: 10000
+        });
+        return false;
+      }
+
       toast.error("Erro inesperado ao cadastrar nova unidade. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Submit new unit finalizado');
     }
   };
 
-  const linkExistingUnit = async (unitId: string): Promise<boolean> => {
+  const linkExistingUnit = async (unitId: string, retryCount = 0): Promise<boolean> => {
     setIsSubmitting(true);
     
     try {
-      // Validações básicas
-      if (!formData.cpf_rnm || !formData.full_name) {
-        toast.error("CPF e nome completo são obrigatórios");
-        return false;
-      }
+      const timestamp = new Date().toISOString();
+      console.log(`🕐 [${timestamp}] ==================== INÍCIO LINK EXISTING UNIT ====================`);
+      console.log('🔗 Unit ID:', unitId);
+      console.log('📊 FormData:', JSON.stringify(formData, null, 2));
 
-      // Prepare franchisee data
-      const franchiseeData = {
-        cpf_rnm: formData.cpf_rnm,
-        full_name: formData.full_name,
-        birth_date: formData.birth_date || null,
-        email: formData.franchisee_email || null,
-        contact: cleanPhoneNumber(formData.contact), // Sempre salvar apenas números
-        nationality: formData.nationality || null,
-        owner_type: formData.owner_type,
-        education: formData.education || null,
-        previous_profession: formData.previous_profession || null,
-        previous_salary_range: formData.previous_salary_range || null,
-        was_entrepreneur: formData.was_entrepreneur,
-        availability: formData.availability || null,
-        discovery_source: formData.discovery_source || null,
-        was_referred: formData.was_referred,
-        referrer_name: formData.referrer_name || null,
-        referrer_unit_code: formData.referrer_unit_code || null,
-        has_other_activities: formData.has_other_activities,
-        other_activities_description: formData.other_activities_description || null,
-        receives_prolabore: formData.receives_prolabore,
-        prolabore_value: formData.prolabore_value || null,
-        profile_image: formData.profile_image || null,
-        instagram: formData.instagram || null,
-        address: formData.franchisee_address || null,
-        number_address: formData.franchisee_number_address || null,
-        address_complement: formData.franchisee_address_complement || null,
-        neighborhood: formData.franchisee_neighborhood || null,
-        city: formData.franchisee_city || null,
-        state: formData.franchisee_state || null,
-        uf: formData.franchisee_uf || null,
-        postal_code: formData.franchisee_postal_code || null,
-        lgpd_term_accepted: true,
-        confidentiality_term_accepted: true,
-        system_term_accepted: true,
+      // Preparar dados com flags especiais para a Edge Function
+      const linkFormData = {
+        ...formData,
+        _linking_existing_unit: true,
+        _existing_unit_id: unitId
       };
 
-      // Insert franchisee data
-      const franchiseeResult = await supabase
-        .from('franqueados')
-        .upsert(franchiseeData, { onConflict: 'cpf_rnm' })
-        .select('id')
-        .single();
+      const payload = {
+        action: 'submitForm',
+        formData: linkFormData
+      };
 
-      if (franchiseeResult.error) {
-        console.error('Franchisee upsert error:', franchiseeResult.error);
-        toast.error(`Erro ao salvar dados do franqueado: ${franchiseeResult.error.message}`);
-        return false;
-      }
+      console.log('🎯 Chamando Edge Function: onboarding-submit (linkExistingUnit)');
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log('⏳ Aguardando resposta...');
 
-      const franchiseeIdResult = franchiseeResult.data.id;
-      setFranchiseeId(franchiseeIdResult);
+      const invokeStart = Date.now();
 
-      // Notificar n8n sobre o franqueado criado/atualizado
-      await notifyN8n({
-        id: franchiseeIdResult,
-        cpf: formData.cpf_rnm,
-        nome: formData.full_name,
-        telefone: cleanPhoneNumber(formData.contact), // Enviar apenas números
-        codigo_unidade: String(formData.group_code)
+      // Timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Edge Function não respondeu em 30s')), 30000)
+      );
+
+      const invokePromise = supabase.functions.invoke('onboarding-submit', {
+        body: payload
       });
 
-      // Verificar se este franqueado já está vinculado a esta unidade
-      console.log('🔍 Verificando se este franqueado já está vinculado a esta unidade...');
-      const { data: existingRelation } = await supabase
-        .from('franqueados_unidades')
-        .select('id')
-        .eq('unidade_id', unitId)
-        .eq('franqueado_id', franchiseeIdResult)
-        .maybeSingle();
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
 
-      if (existingRelation) {
-        console.log('⚠️ Este franqueado já está vinculado a esta unidade');
-        toast.success("Franqueado já vinculado a esta unidade!");
-        return true;
-      }
+      const invokeDuration = Date.now() - invokeStart;
+      console.log(`⏱️ Tempo de resposta: ${invokeDuration}ms`);
+      console.log('📥 Resposta recebida:');
+      console.log('  - data:', data);
+      console.log('  - error:', error);
 
-      // Criar nova relação (permitir múltiplos franqueados na mesma unidade)
-      console.log('➕ Criando nova relação franqueado-unidade...');
-      const { error: insertError } = await supabase
-        .from('franqueados_unidades')
-        .insert({ 
-          franqueado_id: franchiseeIdResult, 
-          unidade_id: unitId 
-        });
+      // INTERCEPTAÇÃO CRÍTICA DE ERRO RLS
+      if (error) {
+        console.error('❌ ERRO AO VINCULAR UNIDADE EXISTENTE:', error);
+        
+        if (error.message?.toLowerCase().includes('row-level security') || 
+            error.message?.toLowerCase().includes('policy') ||
+            error.code === '42501') {
+          console.error('🚨🚨🚨 ERRO DE RLS DETECTADO EM LINK EXISTING UNIT! 🚨🚨🚨');
+          toast.error('ERRO CRÍTICO: Sistema tentando salvar sem bypass de RLS.', {
+            duration: 10000
+          });
+          return false;
+        }
 
-      if (insertError) {
-        console.error('❌ Erro ao criar relação:', insertError);
-        toast.error(`Erro ao vincular franqueado à unidade: ${insertError.message}`);
+        // Retry automático
+        if (retryCount < 1 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+          console.log('🔄 Tentando novamente em 2 segundos...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return linkExistingUnit(unitId, retryCount + 1);
+        }
+
+        toast.error(`Erro ao vincular à unidade existente: ${error.message}`);
         return false;
       }
 
-      console.log('✅ Nova relação criada com sucesso');
-      toast.success("Franqueado vinculado à unidade com sucesso!");
-      return true;
+      if (!data.success) {
+        console.error('❌ Edge Function retornou erro:', data.error);
+        toast.error(data.error || 'Erro ao vincular à unidade existente');
+        return false;
+      }
 
+      console.log('✅ VINCULAÇÃO REALIZADA COM SUCESSO!');
+
+      if (data.franchiseeId) {
+        console.log('💾 Armazenando franchiseeId:', data.franchiseeId);
+        setFranchiseeId(data.franchiseeId);
+      }
+
+      // Notificar n8n
+      if (data.franchiseeId) {
+        console.log('📤 Iniciando notificação ao n8n...');
+        try {
+          await notifyN8n({
+            id: data.franchiseeId,
+            cpf: formData.cpf_rnm,
+            nome: formData.full_name,
+            telefone: cleanPhoneNumber(formData.contact),
+            codigo_unidade: String(formData.group_code)
+          });
+          console.log('✅ n8n notificado com sucesso');
+        } catch (n8nError) {
+          console.error('⚠️ Erro ao notificar n8n (não-crítico):', n8nError);
+        }
+      }
+
+      // Limpar flags especiais após sucesso
+      updateFormData({
+        _linking_existing_unit: undefined,
+        _existing_unit_id: undefined
+      });
+
+      console.log(`🕐 [${new Date().toISOString()}] ==================== FIM LINK EXISTING UNIT ====================`);
+      
+      toast.success(data.message || "Franqueado vinculado à unidade com sucesso!");
+      return true;
     } catch (error) {
-      console.error('Link existing unit error:', error);
-      toast.error("Erro inesperado ao vincular unidade. Tente novamente.");
+      console.error('❌ ERRO INESPERADO:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.toLowerCase().includes('row-level security') || 
+          errorMessage.toLowerCase().includes('policy')) {
+        console.error('🚨🚨🚨 ERRO DE RLS EM EXCEÇÃO (LINK EXISTING UNIT)! 🚨🚨🚨');
+        toast.error('ERRO CRÍTICO: Violação de RLS detectada.', {
+          duration: 10000
+        });
+        return false;
+      }
+
+      toast.error("Erro inesperado ao vincular à unidade. Tente novamente.");
       return false;
     } finally {
       setIsSubmitting(false);
+      console.log('🏁 Link existing unit finalizado');
     }
   };
 
@@ -717,6 +667,10 @@ export const useOnboardingForm = () => {
     linkExistingUnit,
     isSubmitting,
     franchiseeId,
-    setExistingFranchisee
+    setExistingFranchisee,
+    // Novos retornos para sistema de aprovação
+    requestNumber,
+    requestType,
+    needsApproval,
   };
 };

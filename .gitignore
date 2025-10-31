@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+Dockerfile
+*.yml
+*.sh
+*.conf
+Makefile
+.github/
+.env
